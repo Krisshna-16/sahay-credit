@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SahayCredit - Hackathon Pitch Deck Comparison</title>
+  
+  <!-- Premium Modern Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Shared Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="pitch-body">
+
+  <!-- Background decorative glows -->
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <!-- Full Slide Wrapper -->
+  <div class="pitch-container">
+    
+    <!-- Slide Header -->
+    <header class="pitch-header">
+      <div class="logo-area">
+        <span class="logo-accent">⚡</span>
+        <span class="logo-text">Sahay<span class="logo-sub">Credit</span></span>
+        <span class="pitch-badge" id="pitch-badge-text">PITCH DECK</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <button id="lang-toggle-btn" class="lang-toggle" aria-label="Toggle language">
+          <span class="lang-text active" data-lang="en">EN</span>
+          <span class="lang-divider">|</span>
+          <span class="lang-text" data-lang="hi">हिं</span>
+        </button>
+        <div class="pitch-nav-links">
+          <a href="index.html" class="pitch-nav-link" id="nav-link-borrower">Borrower App</a>
+          <a href="demo.html" class="pitch-nav-link" id="nav-link-kirana">Kirana Demo</a>
+          <a href="lender.html" class="pitch-nav-link" id="nav-link-lender">Lender Dashboard</a>
+          <a href="map.html" class="pitch-nav-link" style="color:var(--secondary);" id="nav-link-map">🗺️ Credit Gap Map</a>
+          <a href="ml_pipeline.html" class="pitch-nav-link" style="color:#F4A261;" id="nav-link-ml">🧠 ML Pipeline</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Slide Title Section -->
+    <div class="pitch-title-area">
+      <span class="slide-number-tag" id="slide-number-tag">SLIDE 04 / COMPETITIVE ADVANTAGE</span>
+      <h1 class="slide-title" id="slide-title">Re-Architecting Indian Retail Credit</h1>
+      <p class="slide-subtitle" id="slide-subtitle">
+        How SahayCredit's behavior-driven, privacy-preserving framework unlocks the 190M underserved thin-file market.
+      </p>
+    </div>
+
+    <!-- Comparison Matrix Section -->
+    <div class="matrix-card">
+      <table class="pitch-table">
+        <thead>
+          <tr>
+            <th id="th-dimension">Underwriting Dimension</th>
+            <th id="th-banks">Traditional Banks</th>
+            <th id="th-fintechs">FinTechs <span class="table-sub">(e.g., CreditMantri)</span></th>
+            <th class="col-winner-head" id="th-sahay">SahayCredit ✦</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Row 1 -->
+          <tr>
+            <td class="dimension-cell" id="dim-cell-1">Credit Bureau Required</td>
+            <td class="cell-reject" id="bank-cell-1">❌ Yes <span class="cell-sub">(Rejects CIBIL &lt; 750)</span></td>
+            <td class="cell-reject" id="fin-cell-1">❌ Yes <span class="cell-sub">(Soft pulls CRIF/Experian)</span></td>
+            <td class="col-winner-cell cell-winner" id="sahay-cell-1">✅ No Bureau Required <span class="cell-sub-winner">(0 CIBIL friendly)</span></td>
+          </tr>
+          <!-- Row 2 -->
+          <tr>
+            <td class="dimension-cell" id="dim-cell-2">Primary Data Source</td>
+            <td class="cell-reject" id="bank-cell-2">❌ Historical debt repayment logs</td>
+            <td class="cell-reject" id="fin-cell-2">❌ Centralized SMS & contact scraping</td>
+            <td class="col-winner-cell cell-winner" id="sahay-cell-2">✅ On-device alternate logs & behavior</td>
+          </tr>
+          <!-- Row 3 -->
+          <tr>
+            <td class="dimension-cell" id="dim-cell-3">Privacy Architecture</td>
+            <td class="cell-reject" id="bank-cell-3">❌ Centralized databases <span class="cell-sub">(Leak risk)</span></td>
+            <td class="cell-reject" id="fin-cell-3">❌ Cloud database ingestion</td>
+            <td class="col-winner-cell cell-winner" id="sahay-cell-3">✅ Device-local federated gradients</td>
+          </tr>
+          <!-- Row 4 -->
+          <tr>
+            <td class="dimension-cell" id="dim-cell-4">Score Explainability</td>
+            <td class="cell-reject" id="bank-cell-4">❌ None <span class="cell-sub">(Black-box automated rejection)</span></td>
+            <td class="cell-reject" id="fin-cell-4">❌ Rule-based metrics <span class="cell-sub">(Coarse filters)</span></td>
+            <td class="col-winner-cell cell-winner" id="sahay-cell-4">✅ Real-time SHAP feature attributions</td>
+          </tr>
+          <!-- Row 5 -->
+          <tr>
+            <td class="dimension-cell" id="dim-cell-5">Borrower Consent Model</td>
+            <td class="cell-reject" id="bank-cell-5">❌ All-or-nothing signing sheets</td>
+            <td class="cell-reject" id="fin-cell-5">❌ Mandatory screen scraper clicks</td>
+            <td class="col-winner-cell cell-winner" id="sahay-cell-5">✅ RBI Account Aggregator toggles</td>
+          </tr>
+          <!-- Row 6 -->
+          <tr>
+            <td class="dimension-cell" id="dim-cell-6">Underserved Reach</td>
+            <td class="cell-reject" id="bank-cell-6">❌ &lt; 10% <span class="cell-sub">(Urban salaried prime segment)</span></td>
+            <td class="cell-reject" id="fin-cell-6">❌ &lt; 30% <span class="cell-sub">(Requires digital footprint)</span></td>
+            <td class="col-winner-cell cell-winner" id="sahay-cell-6">✅ 95%+ <span class="cell-sub-winner">(Kirana, farmers, gig-workers)</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pitch Metrics Grid (Slide Footer) -->
+    <div class="pitch-metrics-grid">
+      <div class="metric-badge-box">
+        <span class="m-value">190 Million</span>
+        <span class="m-label" id="m-label-1">Thin-File Indian Borrowers Unlocked</span>
+      </div>
+      <div class="metric-badge-box">
+        <span class="m-value">100% On-Device</span>
+        <span class="m-label" id="m-label-2">Zero Raw Data Leakage Guaranteed</span>
+      </div>
+      <div class="metric-badge-box">
+        <span class="m-value" id="m-val-3">RBI AA Compliant</span>
+        <span class="m-label" id="m-label-3">Granular consent signature frameworks</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Inline bilingual translation script -->
+  <script>
+    const translations = {
+      en: {
+        badge: "PITCH DECK",
+        borrowerLink: "Borrower App",
+        kiranaLink: "Kirana Demo",
+        lenderLink: "Lender Dashboard",
+        slideNum: "SLIDE 04 / COMPETITIVE ADVANTAGE",
+        title: "Re-Architecting Indian Retail Credit",
+        subtitle: "How SahayCredit's behavior-driven, privacy-preserving framework unlocks the 190M underserved thin-file market.",
+        thDim: "Underwriting Dimension",
+        thBanks: "Traditional Banks",
+        thFins: "FinTechs <span class='table-sub'>(e.g., CreditMantri)</span>",
+        thSahay: "SahayCredit ✦",
+        dim1: "Credit Bureau Required",
+        bank1: "❌ Yes <span class='cell-sub'>(Rejects CIBIL &lt; 750)</span>",
+        fin1: "❌ Yes <span class='cell-sub'>(Soft pulls CRIF/Experian)</span>",
+        sahay1: "✅ No Bureau Required <span class='cell-sub-winner'>(0 CIBIL friendly)</span>",
+        dim2: "Primary Data Source",
+        bank2: "❌ Historical debt repayment logs",
+        fin2: "❌ Centralized SMS & contact scraping",
+        sahay2: "✅ On-device alternate logs & behavior",
+        dim3: "Privacy Architecture",
+        bank3: "❌ Centralized databases <span class='cell-sub'>(Leak risk)</span>",
+        fin3: "❌ Cloud database ingestion",
+        sahay3: "✅ Device-local federated gradients",
+        dim4: "Score Explainability",
+        bank4: "❌ None <span class='cell-sub'>(Black-box automated rejection)</span>",
+        fin4: "❌ Rule-based metrics <span class='cell-sub'>(Coarse filters)</span>",
+        sahay4: "✅ Real-time SHAP feature attributions",
+        dim5: "Borrower Consent Model",
+        bank5: "❌ All-or-nothing signing sheets",
+        fin5: "❌ Mandatory screen scraper clicks",
+        sahay5: "✅ RBI Account Aggregator toggles",
+        dim6: "Underserved Reach",
+        bank6: "❌ &lt; 10% <span class='cell-sub'>(Urban salaried prime segment)</span>",
+        fin6: "❌ &lt; 30% <span class='cell-sub'>(Requires digital footprint)</span>",
+        sahay6: "✅ 95%+ <span class='cell-sub-winner'>(Kirana, farmers, gig-workers)</span>",
+        mLabel1: "Thin-File Indian Borrowers Unlocked",
+        mLabel2: "Zero Raw Data Leakage Guaranteed",
+        mVal3: "RBI AA Compliant",
+        mLabel3: "Granular consent signature frameworks"
+      },
+      hi: {
+        badge: "पिच डेक",
+        borrowerLink: "उधारकर्ता ऐप",
+        kiranaLink: "किराना डेमो",
+        lenderLink: "ऋणदाता डैशबोर्ड",
+        slideNum: "स्लाइड 04 / तुलनात्मक लाभ",
+        title: "भारतीय खुदरा ऋण का पुनर्गठन",
+        subtitle: "कैसे सहायक्रेडिट का व्यवहार-संचालित, गोपनीयता-संरक्षण ढांचा 190M वंचित थिन-फाइल बाजार को अनलॉक करता है।",
+        thDim: "अंडरराइटिंग आयाम",
+        thBanks: "पारंपरिक बैंक",
+        thFins: "फिनटेक <span class='table-sub'>(जैसे, क्रेडिटमंत्री)</span>",
+        thSahay: "सहायक्रेडिट ✦",
+        dim1: "क्रेडिट ब्यूरो आवश्यक",
+        bank1: "❌ हाँ <span class='cell-sub'>(सिबिल &lt; 750 होने पर खारिज)</span>",
+        fin1: "❌ हाँ <span class='cell-sub'>(CRIF/Experian सॉफ्ट पुल)</span>",
+        sahay1: "✅ ब्यूरो आवश्यक नहीं <span class='cell-sub-winner'>(0 सिबिल अनुकूल)</span>",
+        dim2: "प्राथमिक डेटा स्रोत",
+        bank2: "❌ ऐतिहासिक ऋण पुनर्भुगतान लॉग",
+        fin2: "❌ केंद्रीकृत एसएमएस और संपर्क स्क्रैपिंग",
+        sahay2: "✅ ऑन-डिवाइस वैकल्पिक लॉग और व्यवहार",
+        dim3: "गोपनीयता वास्तुकला",
+        bank3: "❌ केंद्रीकृत डेटाबेस <span class='cell-sub'>(लीक जोखिम)</span>",
+        fin3: "❌ क्लाउड डेटाबेस अंतर्ग्रहण",
+        sahay3: "✅ डिवाइस-स्थानीय फ़ेडरेटेड ग्रेडिएंट्स",
+        dim4: "स्कोर व्याख्यात्मकता",
+        bank4: "❌ कोई नहीं <span class='cell-sub'>(ब्लैक-बॉक्स स्वचालित अस्वीकृति)</span>",
+        fin4: "❌ नियम-आधारित मेट्रिक्स <span class='cell-sub'>(मोटे फिल्टर)</span>",
+        sahay4: "✅ वास्तविक समय SHAP सुविधा विशेषताएं",
+        dim5: "उधारकर्ता सहमति मॉडल",
+        bank5: "❌ सब-या-कुछ-नहीं हस्ताक्षर पत्रक",
+        fin5: "❌ अनिवार्य स्क्रीन स्क्रैपर क्लिक",
+        sahay5: "✅ आरबीआई खाता एग्रीगेटर टॉगल",
+        dim6: "वंचित पहुंच",
+        bank6: "❌ &lt; 10% <span class='cell-sub'>(शहरी वेतनभोगी प्राइम सेगमेंट)</span>",
+        fin6: "❌ &lt; 30% <span class='cell-sub'>(डिजिटल पदचिह्न की आवश्यकता)</span>",
+        sahay6: "✅ 95%+ <span class='cell-sub-winner'>(किराना, किसान, गिग-वर्कर्स)</span>",
+        mLabel1: "थिन-फाइल भारतीय उधारकर्ता अनलॉक",
+        mLabel2: "शून्य कच्चा डेटा रिसाव गारंटीकृत",
+        mVal3: "आरबीआई एए अनुपालन",
+        mLabel3: "बारीक सहमति हस्ताक्षर रूपरेखा"
+      }
+    };
+
+    let currentLang = 'en';
+
+    const btn = document.getElementById('lang-toggle-btn');
+    btn.addEventListener('click', () => {
+      currentLang = currentLang === 'en' ? 'hi' : 'en';
+      
+      const enLabel = btn.querySelector('[data-lang="en"]');
+      const hiLabel = btn.querySelector('[data-lang="hi"]');
+      if (currentLang === 'en') {
+        enLabel.classList.add('active');
+        hiLabel.classList.remove('active');
+      } else {
+        enLabel.classList.remove('active');
+        hiLabel.classList.add('active');
+      }
+      
+      translateUI();
+    });
+
+    function translateUI() {
+      const t = translations[currentLang];
+      
+      document.getElementById('pitch-badge-text').textContent = t.badge;
+      document.getElementById('nav-link-borrower').textContent = t.borrowerLink;
+      document.getElementById('nav-link-kirana').textContent = t.kiranaLink;
+      document.getElementById('nav-link-lender').textContent = t.lenderLink;
+      
+      document.getElementById('slide-number-tag').textContent = t.slideNum;
+      document.getElementById('slide-title').textContent = t.title;
+      document.getElementById('slide-subtitle').textContent = t.subtitle;
+      
+      document.getElementById('th-dimension').textContent = t.thDim;
+      document.getElementById('th-banks').textContent = t.thBanks;
+      document.getElementById('th-fintechs').innerHTML = t.thFins;
+      document.getElementById('th-sahay').textContent = t.thSahay;
+      
+      document.getElementById('dim-cell-1').textContent = t.dim1;
+      document.getElementById('bank-cell-1').innerHTML = t.bank1;
+      document.getElementById('fin-cell-1').innerHTML = t.fin1;
+      document.getElementById('sahay-cell-1').innerHTML = t.sahay1;
+      
+      document.getElementById('dim-cell-2').textContent = t.dim2;
+      document.getElementById('bank-cell-2').innerHTML = t.bank2;
+      document.getElementById('fin-cell-2').innerHTML = t.fin2;
+      document.getElementById('sahay-cell-2').innerHTML = t.sahay2;
+      
+      document.getElementById('dim-cell-3').textContent = t.dim3;
+      document.getElementById('bank-cell-3').innerHTML = t.bank3;
+      document.getElementById('fin-cell-3').innerHTML = t.fin3;
+      document.getElementById('sahay-cell-3').innerHTML = t.sahay3;
+      
+      document.getElementById('dim-cell-4').textContent = t.dim4;
+      document.getElementById('bank-cell-4').innerHTML = t.bank4;
+      document.getElementById('fin-cell-4').innerHTML = t.fin4;
+      document.getElementById('sahay-cell-4').innerHTML = t.sahay4;
+      
+      document.getElementById('dim-cell-5').textContent = t.dim5;
+      document.getElementById('bank-cell-5').innerHTML = t.bank5;
+      document.getElementById('fin-cell-5').innerHTML = t.fin5;
+      document.getElementById('sahay-cell-5').innerHTML = t.sahay5;
+      
+      document.getElementById('dim-cell-6').textContent = t.dim6;
+      document.getElementById('bank-cell-6').innerHTML = t.bank6;
+      document.getElementById('fin-cell-6').innerHTML = t.fin6;
+      document.getElementById('sahay-cell-6').innerHTML = t.sahay6;
+      
+      document.getElementById('m-label-1').textContent = t.mLabel1;
+      document.getElementById('m-label-2').textContent = t.mLabel2;
+      document.getElementById('m-val-3').textContent = t.mVal3;
+      document.getElementById('m-label-3').textContent = t.mLabel3;
+    }
+  </script>
+</body>
+</html>
