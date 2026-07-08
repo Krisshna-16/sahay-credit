@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SahayCredit Partner Portal - Lender Dashboard</title>
+  
+  <!-- Premium Modern Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Shared CSS + Lender styling overrides inside style.css -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="lender-body">
+
+  <!-- Background decorative glows -->
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <!-- Full-Width Desktop Workspace Container -->
+  <div class="lender-container">
+    
+    <!-- Top Dashboard Header Bar -->
+    <header class="lender-header">
+      <div class="logo-area">
+        <span class="logo-accent">⚡</span>
+        <span class="logo-text">Sahay<span class="logo-sub">Credit</span> <span class="logo-portal" id="logo-portal-text">LENDER PORTAL</span></span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <button id="lang-toggle-btn" class="lang-toggle" aria-label="Toggle language">
+          <span class="lang-text active" data-lang="en">EN</span>
+          <span class="lang-divider">|</span>
+          <span class="lang-text" data-lang="hi">हिं</span>
+        </button>
+        <a href="map.html" style="color:var(--secondary);font-size:0.72rem;font-weight:700;text-decoration:none;" title="Credit Gap Map">🗺️ Map</a>
+        <a href="ml_pipeline.html" style="color:#F4A261;font-size:0.72rem;font-weight:700;text-decoration:none;" title="ML Training Pipeline">🧠 ML Pipeline</a>
+        <div class="lender-profile-info">
+          <span class="partner-badge" id="partner-badge-text">Partner NBFC: FinServe NBFC</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Overview Statistics Panels -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <span class="stat-title" id="stat-total-title">Total Applications</span>
+        <span id="stat-active" class="stat-number">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-title" id="stat-avg-score-title">Avg Score</span>
+        <span id="stat-avg-score" class="stat-number">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-title" id="stat-approved-title">Approval Rate</span>
+        <span id="stat-approved" class="stat-number">0%</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-title" id="stat-avg-loan-title">Avg Loan Size</span>
+        <span id="stat-avg-loan" class="stat-number">₹0</span>
+      </div>
+    </div>
+
+    <div class="lender-tabs-row">
+      <button class="lender-tab-btn active" id="tab-applications" data-target="applications-workspace">
+        📁 <span id="tab-applications-text">Applications</span>
+      </button>
+      <button class="lender-tab-btn" id="tab-audit" data-target="audit-workspace">
+        ⚖️ <span id="tab-audit-text">Regulatory Audit Panel</span>
+      </button>
+      <button class="lender-tab-btn" id="tab-api" data-target="api-workspace">
+        🔌 <span id="tab-api-text">API Documentation</span>
+      </button>
+      <button class="lender-tab-btn" id="tab-analytics" data-target="analytics-workspace">
+        📊 <span id="tab-analytics-text">Live Analytics</span>
+      </button>
+    </div>
+
+    <!-- APPLICATIONS PANEL WORKSPACE -->
+    <div id="applications-workspace" class="lender-tab-pane active-pane">
+      <div class="lender-workspace-grid">
+      
+      <!-- LEFT WORKSPACE: Master Application Table -->
+      <div class="table-workspace-panel">
+        
+        <!-- Table Toolbar & Filters -->
+        <div class="toolbar-box">
+          <h2 class="workspace-title" id="workspace-title">Incoming Application Pool</h2>
+          <div class="filter-controls">
+            <input type="text" id="search-input" placeholder="Search by name..." class="search-field">
+            <select id="status-filter" class="filter-dropdown">
+              <option value="All" id="opt-all">All Statuses</option>
+              <option value="Approve" id="opt-approve">Approved</option>
+              <option value="Review" id="opt-review">In Review</option>
+              <option value="Reject" id="opt-reject">Rejected</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Master Applications Table -->
+        <div class="table-wrapper">
+          <table class="lender-table">
+            <thead>
+              <tr>
+                <th id="th-name">Name</th>
+                <th id="th-score">Score</th>
+                <th id="th-confidence">Confidence Band</th>
+                <th id="th-loan">Loan Requested</th>
+                <th id="th-rate">Suggested Rate</th>
+                <th id="th-signals">Signals Used</th>
+                <th id="th-status">Status</th>
+              </tr>
+            </thead>
+            <tbody id="applications-table-body">
+              <!-- Dynamically populated via lender.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- RIGHT WORKSPACE: Detail Deep-Dive Sticky Panel -->
+      <div class="detail-workspace-panel">
+        <div id="no-selection-notice" class="no-selection-card">
+          <span class="no-selection-icon">🔍</span>
+          <h3 id="no-selection-title">Select an Applicant</h3>
+          <p id="no-selection-desc">Click any row in the pool table to load their alternate credit details, SHAP indicators, and local audit trail logs.</p>
+        </div>
+
+        <!-- Dynamic Detailed View Drawer (hidden by default, shown when applicant selected) -->
+        <div id="applicant-details-card" class="details-deep-dive-card" style="display: none;">
+          
+          <!-- Detailed Header -->
+          <div class="detail-header-row">
+            <div>
+              <h2 id="detail-name" class="detail-name-text">Ramesh Kumar</h2>
+              <span id="detail-id" class="detail-id-text">ID: app-001</span>
+            </div>
+            <!-- Dynamic Status Badge -->
+            <span id="detail-status" class="status-pill status-review">Review</span>
+          </div>
+
+          <!-- Dynamic Status Underwriter Actions -->
+          <div class="action-decision-bar">
+            <button id="action-approve-btn" class="decision-btn btn-approve">Approve</button>
+            <button id="action-review-btn" class="decision-btn btn-review">Flag for Review</button>
+            <button id="action-reject-btn" class="decision-btn btn-reject">Reject</button>
+          </div>
+
+          <!-- Metric highlights (Score dial inside panel) -->
+          <div class="detail-scores-row">
+            <div class="detail-score-box">
+              <span class="detail-score-title" id="score-label-title">Sahay Score</span>
+              <span id="detail-score-value" class="detail-score-num">718</span>
+              <span id="detail-score-bounds" class="detail-score-range">Interval: 703 - 733</span>
+            </div>
+            <div class="detail-score-box">
+              <span class="detail-score-title" id="pricing-label-title">Suggested Pricing</span>
+              <span id="detail-rate-value" class="detail-score-num">14% p.a.</span>
+              <span class="detail-score-range" id="apr-rec-label">APR (Recommended)</span>
+            </div>
+          </div>
+
+          <!-- SHAP Explanations Section -->
+          <div class="detail-section">
+            <h4 class="detail-section-title" id="shap-section-title">Top 3 Credit Drivers (SHAP Factors)</h4>
+            <ul id="detail-shap-list" class="shap-detail-list">
+              <!-- Dynamically populated -->
+            </ul>
+          </div>
+
+          <!-- 6 Alternate Data Signals shown as a horizontal bar chart -->
+          <div class="detail-section">
+            <h4 class="detail-section-title" id="signals-section-title">Alternate Data Signals (Horizontal Bar Chart)</h4>
+            <div id="signals-chart-container" class="signals-chart-container" style="display: flex; flex-direction: column; gap: 12px;">
+              <!-- Dynamically populated horizontal bars via lender.js -->
+            </div>
+          </div>
+
+          <!-- Psychometric Summary -->
+          <div class="detail-section">
+            <h4 class="detail-section-title" id="psych-section-title">Psychometric Summary</h4>
+            <div class="psych-summary-box" style="background: var(--bg-input-glass); border: 1px solid var(--border-glass); border-radius: 12px; padding: 14px; display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 0.85rem; color: var(--text-sub);" id="risk-attitude-label">Risk Attitude Level:</span>
+              <strong id="detail-risk-attitude" class="status-pill" style="font-size: 0.8rem; padding: 4px 10px;">Medium</strong>
+            </div>
+          </div>
+
+          <!-- Audit Trail Section -->
+          <div class="detail-section">
+            <h4 class="detail-section-title" id="audit-section-title">RBI AA Audit Trail Logs</h4>
+            <div class="audit-trail-panel">
+              <ul id="detail-audit-trail" class="audit-log-list">
+                <!-- Dynamically populated -->
+              </ul>
+            </div>
+          </div>
+
+          <!-- Export Actions -->
+          <div class="export-box">
+            <button id="export-audit-btn" class="btn btn-secondary btn-glow" style="width: 100%;">
+              <span id="export-btn-text">📄 Export Report</span>
+            </button>
+            <p class="export-notice" id="export-notice-text">Instant local export generated in CSV format (under 2 seconds guaranteed).</p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    </div> <!-- Close applications-workspace -->
+
+    <!-- AUDIT PANEL WORKSPACE -->
+    <div id="audit-workspace" class="lender-tab-pane" style="display: none;">
+      
+      <!-- Compliance Summary Bar -->
+      <div class="compliance-summary-row">
+        <div class="compliance-card">
+          <span class="compliance-title" id="lbl-total-decisions">Total Decisions Made</span>
+          <span id="val-total-decisions" class="compliance-value">0</span>
+        </div>
+        <div class="compliance-card">
+          <span class="compliance-title" id="lbl-avg-explainability">Avg Explainability Score</span>
+          <span id="val-avg-explainability" class="compliance-value">9.8/10</span>
+        </div>
+        <div class="compliance-card">
+          <span class="compliance-title" id="lbl-auditable-latency">Auditable in &lt;2s</span>
+          <span class="compliance-value">100%</span>
+        </div>
+        <div class="compliance-card">
+          <span class="compliance-title" id="lbl-consent-obtained">RBI AA Consent Obtained</span>
+          <span class="compliance-value">100%</span>
+        </div>
+      </div>
+
+      <!-- Audit Workspace Panel -->
+      <div class="audit-workspace-panel">
+        
+        <!-- Filter Toolbar -->
+        <div class="audit-toolbar">
+          <h2 class="workspace-title" id="lbl-audit-log-title">RBI Compliance Audit Logs</h2>
+          <div class="audit-filters-grid">
+            <input type="text" id="audit-search-input" placeholder="Search Application ID..." class="search-field">
+            <select id="audit-decision-filter" class="filter-dropdown">
+              <option value="All" id="opt-audit-all">All Decisions</option>
+              <option value="Approve" id="opt-audit-app">Approved</option>
+              <option value="Review" id="opt-audit-rev">Under Review</option>
+              <option value="Reject" id="opt-audit-rej">Rejected</option>
+            </select>
+            <div class="range-filter-box">
+              <span id="lbl-score-range" class="range-label">Score:</span>
+              <input type="number" id="audit-score-min" class="range-input" min="300" max="900" placeholder="300">
+              <span>-</span>
+              <input type="number" id="audit-score-max" class="range-input" min="300" max="900" placeholder="900">
+            </div>
+            <div class="range-filter-box">
+              <span id="lbl-signal-range" class="range-label">Signals (Min):</span>
+              <input type="number" id="audit-signal-min" class="range-input" min="1" max="6" placeholder="1" style="width: 50px;">
+            </div>
+            <button id="export-audit-csv-btn" class="btn btn-secondary btn-glow">
+              <span id="lbl-export-csv">Export CSV Log</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Audit Table -->
+        <div class="table-wrapper">
+          <table class="lender-table">
+            <thead>
+              <tr>
+                <th id="th-audit-id">Application ID</th>
+                <th id="th-audit-time">Date &amp; Time</th>
+                <th id="th-audit-score">Score</th>
+                <th id="th-audit-model">Model Version</th>
+                <th id="th-audit-signals">Signals</th>
+                <th id="th-audit-shap">Top 3 SHAP Drivers</th>
+                <th id="th-audit-decision">Decision</th>
+                <th id="th-audit-latency">Latency</th>
+              </tr>
+            </thead>
+            <tbody id="audit-table-body">
+              <!-- Dynamically populated via lender.js -->
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div> <!-- Close audit-workspace -->
+
+    <!-- ===================== API DOCS WORKSPACE ===================== -->
+    <div id="api-workspace" class="lender-tab-pane" style="display:none;">
+      <div class="api-shell">
+
+        <!-- LEFT: Endpoint Sidebar -->
+        <aside class="api-sidebar">
+          <div class="api-sidebar-header">
+            <div class="api-logo-line">
+              <span class="api-version-badge">v1.0</span>
+              <span id="api-sidebar-title">REST API Reference</span>
+            </div>
+            <p id="api-sidebar-sub">Base URL: <code>https://api.sahaycredit.in</code></p>
+          </div>
+
+          <nav class="api-nav">
+            <div class="api-nav-group">
+              <div class="api-nav-group-label" id="api-group-scoring">Scoring</div>
+              <button class="api-nav-item active" data-ep="score" id="api-nav-score">
+                <span class="api-method-tag api-post">POST</span>
+                <span>/api/v1/score</span>
+              </button>
+            </div>
+            <div class="api-nav-group">
+              <div class="api-nav-group-label" id="api-group-compliance">Compliance</div>
+              <button class="api-nav-item" data-ep="audit" id="api-nav-audit">
+                <span class="api-method-tag api-get">GET</span>
+                <span>/api/v1/audit/{id}</span>
+              </button>
+            </div>
+            <div class="api-nav-group">
+              <div class="api-nav-group-label" id="api-group-consent">Consent</div>
+              <button class="api-nav-item" data-ep="consent" id="api-nav-consent">
+                <span class="api-method-tag api-delete">DEL</span>
+                <span>/api/v1/consent/{id}</span>
+              </button>
+            </div>
+          </nav>
+
+          <!-- Auth info card -->
+          <div class="api-auth-card">
+            <div class="api-auth-header">🔑 <span id="api-auth-title">Authentication</span></div>
+            <p id="api-auth-desc">All requests require a Bearer token in the Authorization header.</p>
+            <code class="api-auth-code">Authorization: Bearer &lt;API_KEY&gt;</code>
+          </div>
+        </aside>
+
+        <!-- RIGHT: Main content panel -->
+        <div class="api-content">
+
+          <!-- ---- Endpoint title bar ---- -->
+          <div class="api-endpoint-titlebar">
+            <div class="api-endpoint-meta">
+              <span id="api-ep-method-badge" class="api-method-tag api-post" style="font-size:0.85rem; padding:4px 12px;">POST</span>
+              <code id="api-ep-url" class="api-url-code">/api/v1/score</code>
+            </div>
+            <p id="api-ep-desc" class="api-ep-description">Scores a borrower using federated alternate data signals and returns a credit score, SHAP explanations, and eligibility decision.</p>
+          </div>
+
+          <!-- ---- Two-column: Request + Response ---- -->
+          <div class="api-two-col">
+
+            <!-- Request Panel -->
+            <div class="api-panel api-request-panel">
+              <div class="api-panel-header">
+                <span class="api-panel-icon">📤</span>
+                <span id="api-req-title">Request Body</span>
+                <div class="api-panel-actions">
+                  <button class="api-copy-btn" id="api-copy-req-btn" title="Copy">
+                    📋 <span id="api-copy-req-text">Copy</span>
+                  </button>
+                </div>
+              </div>
+              <div class="api-code-editor-wrap">
+                <div class="api-line-nums" id="api-line-nums"></div>
+                <textarea id="api-request-body" class="api-code-editor" spellcheck="false">{
+  "borrower_id": "B-10234",
+  "signals": {
+    "mobile_payments": 11,
+    "upi_monthly_avg": 42000,
+    "geo_stability": "high",
+    "ecommerce_score": 0.72,
+    "psychometric_score": 0.81,
+    "gst_rating": 4.2
+  }
+}</textarea>
+              </div>
+              <!-- Headers section -->
+              <div class="api-headers-section">
+                <div class="api-headers-toggle" id="api-headers-toggle">
+                  <span>📋 Headers</span><span class="api-chevron" id="api-chevron">▶</span>
+                </div>
+                <div class="api-headers-body" id="api-headers-body" style="display:none;">
+                  <div class="api-header-row">
+                    <span class="api-header-key">Content-Type</span>
+                    <span class="api-header-val">application/json</span>
+                  </div>
+                  <div class="api-header-row">
+                    <span class="api-header-key">Authorization</span>
+                    <span class="api-header-val">Bearer sk_live_sahay_••••••••</span>
+                  </div>
+                  <div class="api-header-row">
+                    <span class="api-header-key">X-Partner-ID</span>
+                    <span class="api-header-val">finserve-nbfc-001</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Send button -->
+              <button class="api-send-btn" id="api-send-btn">
+                <span id="api-send-icon">▶</span>
+                <span id="api-send-text">Send Request</span>
+              </button>
+            </div>
+
+            <!-- Response Panel -->
+            <div class="api-panel api-response-panel">
+              <div class="api-panel-header">
+                <span class="api-panel-icon">📥</span>
+                <span id="api-res-title">Response</span>
+                <div class="api-panel-actions" id="api-res-meta" style="display:none;">
+                  <span class="api-status-badge" id="api-status-badge">200 OK</span>
+                  <span class="api-latency-badge" id="api-latency-badge">312 ms</span>
+                  <button class="api-copy-btn" id="api-copy-res-btn">📋 <span id="api-copy-res-text">Copy</span></button>
+                </div>
+              </div>
+
+              <!-- Loading state -->
+              <div class="api-loading" id="api-loading" style="display:none;">
+                <div class="api-loading-spinner"></div>
+                <span id="api-loading-text">Sending request...</span>
+              </div>
+
+              <!-- Empty state -->
+              <div class="api-response-empty" id="api-response-empty">
+                <div class="api-empty-icon">⚡</div>
+                <p id="api-empty-text">Hit "Send Request" to execute the API call and see the live response here.</p>
+              </div>
+
+              <!-- Response body -->
+              <div class="api-response-body-wrap" id="api-response-body-wrap" style="display:none;">
+                <pre id="api-response-body" class="api-response-pre"></pre>
+              </div>
+
+              <!-- SHAP visual breakdown (only for /score endpoint) -->
+              <div class="api-shap-visual" id="api-shap-visual" style="display:none;">
+                <div class="api-shap-header" id="api-shap-header">📊 SHAP Factor Visualisation</div>
+                <div id="api-shap-bars"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ---- Code Examples Tabs ---- -->
+          <div class="api-examples-section">
+            <div class="api-examples-header">
+              <span id="api-examples-title">💻 Code Examples</span>
+              <div class="api-lang-tabs">
+                <button class="api-lang-tab active" data-lang="curl" id="api-lang-curl">cURL</button>
+                <button class="api-lang-tab" data-lang="python" id="api-lang-python">Python</button>
+                <button class="api-lang-tab" data-lang="node" id="api-lang-node">Node.js</button>
+              </div>
+            </div>
+            <div class="api-code-example-wrap">
+              <pre id="api-code-example" class="api-code-example"></pre>
+              <button class="api-copy-btn api-copy-example" id="api-copy-example-btn">📋 Copy</button>
+            </div>
+          </div>
+
+          <!-- ---- Schema Reference ---- -->
+          <div class="api-schema-section">
+            <div class="api-schema-header" id="api-schema-title">📐 Response Schema</div>
+            <div class="api-schema-grid" id="api-schema-grid">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+
+        </div> <!-- /api-content -->
+      </div> <!-- /api-shell -->
+    </div> <!-- /api-workspace -->
+
+    <!-- ══════════════════════════════════════════════
+         ANALYTICS WORKSPACE
+    ══════════════════════════════════════════════ -->
+    <div id="analytics-workspace" class="lender-tab-pane" style="display:none;">
+
+      <!-- Title bar -->
+      <div class="an-titlebar">
+        <div class="an-title-left">
+          <span class="an-live-dot" id="an-live-dot"></span>
+          <h2 class="an-title" id="an-title-text">Live Platform Analytics</h2>
+          <span class="an-refresh-badge" id="an-refresh-badge">Updated every 5s</span>
+        </div>
+        <div class="an-title-right">
+          <button class="an-pause-btn" id="an-pause-btn">
+            <span id="an-pause-icon">⏸</span>
+            <span id="an-pause-text">Pause Live Updates</span>
+          </button>
+          <a href="map.html" class="an-map-link" style="color:var(--secondary);font-size:0.72rem;font-weight:700;text-decoration:none;">🗺️ Credit Gap Map</a>
+        </div>
+      </div>
+
+      <!-- Chart grid 2×2 -->
+      <div class="an-grid">
+
+        <!-- Chart 1 — Score Distribution bar -->
+        <div class="an-card">
+          <div class="an-card-hdr">
+            <span class="an-card-icon">📊</span>
+            <div class="an-card-meta">
+              <div class="an-card-title" id="ch1-title">Score Distribution</div>
+              <div class="an-card-sub" id="ch1-sub">Applicants per credit score bucket</div>
+            </div>
+            <div class="an-card-live-val" id="ch1-total">—</div>
+          </div>
+          <canvas id="ch-score" width="580" height="220"></canvas>
+        </div>
+
+        <!-- Chart 2 — Radar -->
+        <div class="an-card">
+          <div class="an-card-hdr">
+            <span class="an-card-icon">🕸️</span>
+            <div class="an-card-meta">
+              <div class="an-card-title" id="ch2-title">Signal Contributions</div>
+              <div class="an-card-sub" id="ch2-sub">Avg alternate data signal weight</div>
+            </div>
+          </div>
+          <canvas id="ch-radar" width="580" height="220"></canvas>
+        </div>
+
+        <!-- Chart 3 — Approval rate line (full width) -->
+        <div class="an-card an-card-wide">
+          <div class="an-card-hdr">
+            <span class="an-card-icon">📈</span>
+            <div class="an-card-meta">
+              <div class="an-card-title" id="ch3-title">Approval Rate — Last 30 Days</div>
+              <div class="an-card-sub" id="ch3-sub">SahayCredit vs. industry average for thin-file borrowers</div>
+            </div>
+            <div class="an-legend">
+              <span class="an-legend-line" style="background:var(--secondary);"></span><span id="ch3-leg-sahay">SahayCredit</span>
+              <span class="an-legend-line" style="background:#e74c3c;"></span><span id="ch3-leg-ind">Industry Avg</span>
+            </div>
+          </div>
+          <canvas id="ch-approval" width="1160" height="200"></canvas>
+        </div>
+
+        <!-- Chart 4 — Gauge -->
+        <div class="an-card an-card-gauge">
+          <div class="an-card-hdr">
+            <span class="an-card-icon">⚡</span>
+            <div class="an-card-meta">
+              <div class="an-card-title" id="ch4-title">Avg Time to Score</div>
+              <div class="an-card-sub" id="ch4-sub">Real-time inference latency</div>
+            </div>
+          </div>
+          <div class="an-gauge-layout">
+            <canvas id="ch-gauge" width="260" height="150"></canvas>
+            <div class="an-gauge-readout">
+              <div class="an-gauge-val" id="gauge-val">2.3s</div>
+              <div class="an-gauge-target" id="gauge-target-lbl">Target: &lt;3.0s</div>
+              <div class="an-gauge-status" id="gauge-status">✅ On Target</div>
+              <div class="an-gauge-grid">
+                <div class="an-gauge-cell"><div class="an-gauge-cell-val" id="gauge-p50">—</div><div class="an-gauge-cell-lbl">p50</div></div>
+                <div class="an-gauge-cell"><div class="an-gauge-cell-val" id="gauge-p95">—</div><div class="an-gauge-cell-lbl">p95</div></div>
+                <div class="an-gauge-cell"><div class="an-gauge-cell-val" id="gauge-sla">100%</div><div class="an-gauge-cell-lbl">SLA met</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /an-grid -->
+    </div><!-- /analytics-workspace -->
+
+  </div> <!-- Close lender-container -->
+
+  <!-- Lender-facing logic -->
+  <script src="lender.js"></script>
+</body>
+</html>

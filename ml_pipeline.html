@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SahayCredit — ML Training Pipeline</title>
+  <meta name="description" content="Train and deploy SahayCredit's credit scoring model using Python in the browser via Pyodide.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* ── RESET ─────────────────────────────────────────────── */
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+    /* ── TOKENS ───────────────────────────────────────────── */
+    :root{
+      --bg:      #0D1B2A;
+      --surf:    #1B263B;
+      --card:    rgba(27,38,59,0.85);
+      --pri:     #028090;
+      --sec:     #02C39A;
+      --warn:    #F4A261;
+      --danger:  #e74c3c;
+      --tmain:   #FFFFFF;
+      --tsub:    #E0E1DD;
+      --tmut:    #8D99AE;
+      --border:  rgba(255,255,255,0.08);
+      --tbg:     #070b10;
+      --tgreen:  #02C39A;
+      --tdim:    #3a6b5a;
+      --font:    'Outfit',sans-serif;
+      --mono:    'JetBrains Mono',monospace;
+      --r14:     14px;
+      --r10:     10px;
+    }
+
+    body{background:var(--bg);color:var(--tmain);font-family:var(--font);min-height:100vh;overflow-x:hidden}
+
+    /* ── HEADER ───────────────────────────────────────────── */
+    .hdr{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:12px 28px;background:rgba(13,27,42,0.96);
+      border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;
+      backdrop-filter:blur(12px);
+    }
+    .hdr-logo{display:flex;align-items:center;gap:9px;font-size:1.05rem;font-weight:900}
+    .hdr-badge{
+      font-size:0.55rem;font-weight:800;letter-spacing:1.5px;
+      color:var(--sec);background:rgba(2,195,154,0.1);border:1px solid rgba(2,195,154,0.3);
+      padding:3px 8px;border-radius:4px;
+    }
+    .hdr-nav{display:flex;align-items:center;gap:18px}
+    .hdr-nav a{color:var(--tmut);text-decoration:none;font-size:0.73rem;font-weight:600;transition:color .2s}
+    .hdr-nav a:hover{color:var(--tmain)}
+
+    /* ── PAGE ─────────────────────────────────────────────── */
+    .page{max-width:920px;margin:0 auto;padding:28px 18px 72px;position:relative;z-index:1}
+
+    .page-title{text-align:center;margin-bottom:30px}
+    .page-title h1{font-size:1.9rem;font-weight:900;margin-bottom:6px}
+    .page-title h1 em{font-style:normal;color:var(--sec)}
+    .page-title p{font-size:0.8rem;color:var(--tmut);line-height:1.6;max-width:560px;margin:0 auto}
+
+    /* ── STEPPER ──────────────────────────────────────────── */
+    .stepper{display:flex;align-items:center;justify-content:center;margin-bottom:34px;gap:0;flex-wrap:wrap;row-gap:10px}
+    .s-item{display:flex;flex-direction:column;align-items:center;gap:5px}
+    .s-circle{
+      width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+      font-size:0.85rem;font-weight:800;border:2px solid var(--border);background:var(--surf);
+      color:var(--tmut);transition:all .4s;z-index:1;
+    }
+    .s-item.active .s-circle{border-color:var(--sec);background:rgba(2,195,154,0.15);color:var(--sec);box-shadow:0 0 16px rgba(2,195,154,0.35)}
+    .s-item.done   .s-circle{border-color:var(--sec);background:var(--sec);color:#0D1B2A}
+    .s-lbl{font-size:0.58rem;font-weight:700;color:var(--tmut);text-align:center;text-transform:uppercase;letter-spacing:.4px;line-height:1.3}
+    .s-item.active .s-lbl{color:var(--sec)}
+    .s-item.done   .s-lbl{color:var(--tsub)}
+    .s-conn{width:72px;height:2px;background:var(--border);margin-bottom:22px;transition:background .4s;flex-shrink:0}
+    .s-conn.done{background:var(--sec)}
+
+    /* ── PANELS ───────────────────────────────────────────── */
+    .panel{display:none}
+    .panel.active{display:block;animation:fadein .35s ease}
+    @keyframes fadein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+    .sec-hdr{margin-bottom:18px}
+    .sec-hdr h2{font-size:1.18rem;font-weight:900;margin-bottom:3px}
+    .sec-hdr h2 em{font-style:normal;color:var(--sec)}
+    .sec-hdr p{font-size:0.76rem;color:var(--tmut)}
+
+    /* ── TERMINAL ─────────────────────────────────────────── */
+    .term-card{background:var(--tbg);border:1px solid rgba(2,195,154,0.18);border-radius:16px;overflow:hidden;box-shadow:0 0 50px rgba(2,195,154,0.07)}
+    .term-bar{
+      background:#121820;padding:10px 16px;display:flex;align-items:center;gap:10px;
+      border-bottom:1px solid rgba(255,255,255,0.05);
+    }
+    .term-dots{display:flex;gap:6px}
+    .term-dot{width:11px;height:11px;border-radius:50%}
+    .td-r{background:#ff5f57}.td-y{background:#febc2e}.td-g{background:#28c840}
+    .term-wintitle{font-family:var(--mono);font-size:0.68rem;color:var(--tmut);margin-left:4px}
+    .term-out{
+      padding:18px 20px;min-height:300px;max-height:430px;overflow-y:auto;
+      font-family:var(--mono);font-size:0.77rem;line-height:1.75;
+    }
+    .term-out::-webkit-scrollbar{width:4px}
+    .term-out::-webkit-scrollbar-thumb{background:rgba(2,195,154,0.25);border-radius:2px}
+
+    /* terminal line classes */
+    .tl{display:block}
+    .tc{color:var(--tgreen)}           /* command */
+    .ts{color:var(--sec)}              /* success */
+    .tp{color:#7fcfb8}                 /* progress */
+    .tr{color:#c8ffe0;padding-left:6px}/* result */
+    .te{color:var(--danger)}           /* error */
+    .td{color:var(--tdim)}             /* dim */
+    .tb{color:var(--sec);font-size:.86rem;font-weight:700} /* big success */
+    .blink{animation:blink 1s step-end infinite}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+    .term-footer{
+      padding:13px 20px;border-top:1px solid rgba(255,255,255,0.05);
+      display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    }
+    .btn-train{
+      background:linear-gradient(135deg,var(--pri),var(--sec));color:#fff;border:none;
+      padding:10px 22px;border-radius:10px;font-size:0.82rem;font-weight:800;cursor:pointer;
+      font-family:var(--font);transition:all .25s;box-shadow:0 4px 18px rgba(2,128,144,0.4);
+      display:flex;align-items:center;gap:7px;
+    }
+    .btn-train:hover{transform:translateY(-1px);box-shadow:0 7px 26px rgba(2,195,154,0.5)}
+    .btn-train:disabled{opacity:.45;cursor:not-allowed;transform:none}
+    .btn-continue{
+      display:none;background:var(--sec);color:#0D1B2A;border:none;
+      padding:10px 20px;border-radius:10px;font-size:0.82rem;font-weight:800;cursor:pointer;
+      font-family:var(--font);transition:all .25s;align-items:center;gap:6px;
+    }
+    .btn-continue:hover{transform:translateY(-1px)}
+    .term-status{font-size:0.7rem;color:var(--tmut);flex:1}
+
+    /* ── STEP 2: SLIDERS ──────────────────────────────────── */
+    .s2-grid{display:grid;grid-template-columns:1fr 380px;gap:18px;align-items:start}
+    @media(max-width:780px){.s2-grid{grid-template-columns:1fr}}
+
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px}
+    .card-title{font-size:0.9rem;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+
+    .sl-row{margin-bottom:13px}
+    .sl-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+    .sl-lbl{font-size:0.71rem;font-weight:700;color:var(--tsub)}
+    .sl-val{font-size:0.71rem;font-weight:800;color:var(--sec);min-width:90px;text-align:right}
+
+    input[type=range]{
+      width:100%;-webkit-appearance:none;height:4px;border-radius:2px;
+      background:rgba(255,255,255,0.1);outline:none;cursor:pointer;
+    }
+    input[type=range]::-webkit-slider-thumb{
+      -webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+      background:var(--sec);cursor:pointer;box-shadow:0 0 8px rgba(2,195,154,0.5);transition:transform .15s;
+    }
+    input[type=range]::-webkit-slider-thumb:active{transform:scale(1.3)}
+    input[type=range]::-moz-range-thumb{
+      width:16px;height:16px;border-radius:50%;background:var(--sec);
+      cursor:pointer;border:none;box-shadow:0 0 8px rgba(2,195,154,0.5);
+    }
+
+    .predict-btn{
+      width:100%;padding:12px;background:linear-gradient(135deg,var(--pri),var(--sec));
+      border:none;border-radius:10px;color:#fff;font-size:0.85rem;font-weight:800;cursor:pointer;
+      margin-top:8px;font-family:var(--font);transition:all .25s;box-shadow:0 4px 16px rgba(2,128,144,0.3);
+    }
+    .predict-btn:hover{transform:translateY(-1px);box-shadow:0 7px 22px rgba(2,195,154,0.45)}
+
+    /* Score display card */
+    .score-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;position:sticky;top:72px}
+    @media(max-width:780px){.score-card{position:static}}
+    .score-big{text-align:center;padding:8px 0}
+    .score-num{
+      font-size:5.5rem;font-weight:900;letter-spacing:-4px;line-height:1;
+      color:var(--sec);transition:color .4s;
+    }
+    .score-num.pop{animation:pop .28s ease}
+    @keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+    .score-lbl{font-size:0.65rem;color:var(--tmut);margin-top:3px}
+
+    .score-bar-wrap{height:6px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden;margin:6px 0}
+    .score-bar-fill{height:100%;border-radius:3px;transition:width .55s ease,background .4s}
+
+    .elig-badge{
+      display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;
+      border-radius:10px;font-size:0.85rem;font-weight:800;transition:all .4s;margin:8px 0;
+      border:1px solid var(--border);background:rgba(255,255,255,0.03);color:var(--tmut);
+    }
+    .elig-yes{background:rgba(2,195,154,0.1);border-color:rgba(2,195,154,0.3);color:var(--sec)}
+    .elig-no {background:rgba(231,76,60,0.1);border-color:rgba(231,76,60,0.3);color:var(--danger)}
+
+    .metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+    .metric{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:10px;text-align:center}
+    .metric-val{font-size:0.95rem;font-weight:800;color:var(--tmain)}
+    .metric-lbl{font-size:0.58rem;text-transform:uppercase;letter-spacing:.5px;color:var(--tmut);margin-top:2px}
+
+    .next-btn{
+      width:100%;padding:10px;margin-top:6px;background:rgba(2,195,154,0.08);
+      border:1px solid rgba(2,195,154,0.28);color:var(--sec);border-radius:10px;
+      font-size:0.78rem;font-weight:800;cursor:pointer;font-family:var(--font);transition:all .25s;
+    }
+    .next-btn:hover{background:var(--sec);color:#0D1B2A;border-color:var(--sec)}
+
+    /* ── STEP 3: EXPORT ───────────────────────────────────── */
+    .dl-btn{
+      display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,var(--pri),var(--sec));
+      color:#fff;border:none;padding:14px 26px;border-radius:12px;font-size:0.9rem;font-weight:800;
+      cursor:pointer;font-family:var(--font);transition:all .25s;box-shadow:0 4px 20px rgba(2,128,144,0.4);
+      margin-bottom:18px;
+    }
+    .dl-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(2,195,154,0.5)}
+    .dl-icon{font-size:1.2rem}
+
+    .mstats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+    @media(max-width:600px){.mstats{grid-template-columns:repeat(2,1fr)}}
+    .mstat{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px;text-align:center}
+    .mstat-val{font-size:1.1rem;font-weight:800;color:var(--sec)}
+    .mstat-lbl{font-size:0.58rem;text-transform:uppercase;letter-spacing:.5px;color:var(--tmut);margin-top:2px}
+
+    .json-lbl{font-size:0.7rem;font-weight:700;color:var(--tmut);margin-bottom:7px}
+    .json-view{
+      background:#070b10;border:1px solid rgba(255,255,255,0.07);border-radius:10px;
+      padding:15px;font-family:var(--mono);font-size:0.7rem;color:#7cceaa;line-height:1.65;
+      max-height:200px;overflow-y:auto;word-break:break-all;white-space:pre-wrap;
+    }
+    .json-view::-webkit-scrollbar{width:4px}
+    .json-view::-webkit-scrollbar-thumb{background:rgba(2,195,154,0.25);border-radius:2px}
+    .copy-json-btn{
+      margin-top:8px;background:rgba(255,255,255,0.04);border:1px solid var(--border);
+      color:var(--tmut);padding:7px 16px;border-radius:8px;font-size:0.7rem;font-weight:700;
+      cursor:pointer;font-family:var(--font);transition:all .2s;
+    }
+    .copy-json-btn:hover{color:var(--tmain);border-color:rgba(255,255,255,0.2)}
+
+    .info-box{
+      background:rgba(2,195,154,0.05);border:1px solid rgba(2,195,154,0.18);
+      border-radius:12px;padding:14px 18px;font-size:0.77rem;color:var(--tsub);line-height:1.6;
+      margin-top:14px;
+    }
+    .info-box code{
+      background:rgba(2,195,154,0.1);color:var(--sec);
+      padding:1px 6px;border-radius:4px;font-family:var(--mono);font-size:0.68rem;
+    }
+
+    /* ── STEP 4: GITHUB ───────────────────────────────────── */
+    .gh-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
+    @media(max-width:640px){.gh-grid{grid-template-columns:1fr}}
+
+    .gh-card{
+      background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;
+      transition:border-color .2s;
+    }
+    .gh-card:hover{border-color:rgba(255,255,255,0.14)}
+    .gh-num{font-size:0.58rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--pri);margin-bottom:9px}
+    .gh-title{font-size:0.9rem;font-weight:800;color:var(--tmain);margin-bottom:10px}
+    .gh-steps{list-style:none;display:flex;flex-direction:column;gap:5px}
+    .gh-steps li{font-size:0.73rem;color:var(--tsub);padding-left:16px;position:relative;line-height:1.5}
+    .gh-steps li::before{content:'→';position:absolute;left:0;color:var(--sec)}
+    .gh-steps code{background:rgba(2,195,154,0.1);color:var(--sec);padding:1px 6px;border-radius:4px;font-family:var(--mono);font-size:0.67rem}
+    .gh-btn{
+      display:inline-flex;align-items:center;gap:6px;margin-top:12px;
+      background:rgba(2,195,154,0.08);border:1px solid rgba(2,195,154,0.25);color:var(--sec);
+      padding:7px 14px;border-radius:8px;font-size:0.7rem;font-weight:800;cursor:pointer;
+      text-decoration:none;font-family:var(--font);transition:all .2s;
+    }
+    .gh-btn:hover{background:var(--sec);color:#0D1B2A;border-color:var(--sec)}
+    .warn-box{margin-top:10px;padding:8px 12px;background:rgba(244,162,97,0.07);border:1px solid rgba(244,162,97,0.2);border-radius:8px;font-size:0.66rem;color:#F4A261}
+
+    .url-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px}
+    .url-card-title{font-size:0.9rem;font-weight:800;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+    .url-card-sub{font-size:0.72rem;color:var(--tmut);margin-bottom:14px}
+    .url-inp-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+    .url-inp-lbl{font-size:0.7rem;font-weight:700;color:var(--tsub);white-space:nowrap}
+    .url-inp{
+      flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--tmain);
+      padding:10px 14px;border-radius:9px;font-size:0.82rem;font-family:var(--font);outline:none;transition:border-color .2s;
+    }
+    .url-inp:focus{border-color:var(--sec)}
+    .url-inp::placeholder{color:var(--tmut)}
+
+    .url-result{
+      display:none;align-items:center;gap:10px;
+      background:rgba(2,195,154,0.06);border:1px solid rgba(2,195,154,0.2);
+      border-radius:10px;padding:12px 16px;
+    }
+    .url-result.show{display:flex}
+    .url-txt{font-family:var(--mono);font-size:0.7rem;color:var(--sec);flex:1;word-break:break-all;line-height:1.5}
+    .copy-url-btn{
+      background:var(--sec);color:#0D1B2A;border:none;padding:7px 14px;border-radius:7px;
+      font-size:0.7rem;font-weight:800;cursor:pointer;font-family:var(--font);white-space:nowrap;transition:all .2s;
+    }
+    .copy-url-btn:hover{transform:scale(1.05)}
+    .url-placeholder{text-align:center;padding:18px;color:var(--tmut);font-size:0.76rem}
+
+    /* ── DECORATIVE BG ────────────────────────────────────── */
+    .glow{position:fixed;border-radius:50%;filter:blur(90px);pointer-events:none;z-index:0}
+    .g1{width:500px;height:500px;background:rgba(2,128,144,0.05);top:-120px;right:-120px}
+    .g2{width:350px;height:350px;background:rgba(2,195,154,0.04);bottom:80px;left:-80px}
+  </style>
+</head>
+<body>
+
+<div class="glow g1"></div>
+<div class="glow g2"></div>
+
+<!-- ── HEADER ─────────────────────────────────────────────── -->
+<header class="hdr">
+  <div class="hdr-logo">
+    <span>⚡</span> Sahay<span style="color:var(--pri)">Credit</span>
+    <span class="hdr-badge">ML PIPELINE</span>
+  </div>
+  <nav class="hdr-nav">
+    <a href="index.html">Borrower App</a>
+    <a href="lender.html">Lender Dashboard</a>
+    <a href="map.html">Credit Gap Map</a>
+  </nav>
+</header>
+
+<!-- ── PAGE ───────────────────────────────────────────────── -->
+<main class="page">
+
+  <!-- title -->
+  <div class="page-title">
+    <h1>ML <em>Training Pipeline</em></h1>
+    <p>Train the SahayCredit credit scoring model live in your browser using Python (Pyodide + scikit-learn). No server, no cloud — pure WebAssembly.</p>
+  </div>
+
+  <!-- ── STEPPER ─────────────────────────────────────────── -->
+  <div class="stepper">
+    <div class="s-item active" id="si-1">
+      <div class="s-circle" id="sc-1">1</div>
+      <div class="s-lbl">Install<br>&amp; Train</div>
+    </div>
+    <div class="s-conn" id="sco-1"></div>
+    <div class="s-item" id="si-2">
+      <div class="s-circle" id="sc-2">2</div>
+      <div class="s-lbl">Test<br>Model</div>
+    </div>
+    <div class="s-conn" id="sco-2"></div>
+    <div class="s-item" id="si-3">
+      <div class="s-circle" id="sc-3">3</div>
+      <div class="s-lbl">Export<br>File</div>
+    </div>
+    <div class="s-conn" id="sco-3"></div>
+    <div class="s-item" id="si-4">
+      <div class="s-circle" id="sc-4">4</div>
+      <div class="s-lbl">GitHub<br>Deploy</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       STEP 1 — TRAIN
+  ══════════════════════════════════════════════════════ -->
+  <div class="panel active" id="p1">
+    <div class="sec-hdr">
+      <h2>Step 1 — <em>Install &amp; Train</em></h2>
+      <p>Python runs entirely in your browser via Pyodide (WebAssembly). No cloud account needed — everything is local.</p>
+    </div>
+
+    <div class="term-card">
+      <!-- title bar -->
+      <div class="term-bar">
+        <div class="term-dots">
+          <div class="term-dot td-r"></div>
+          <div class="term-dot td-y"></div>
+          <div class="term-dot td-g"></div>
+        </div>
+        <div class="term-wintitle">sahaycredit-ml — python3 (pyodide v0.25.0)</div>
+      </div>
+
+      <!-- output -->
+      <div class="term-out" id="term-out">
+        <div class="tl tc">$ SahayCredit ML Training Pipeline v1.0</div>
+        <div class="tl td">$ ────────────────────────────────────────────────</div>
+        <div class="tl td">$ Ready. Click "▶ Start Training" to begin.</div>
+        <div class="tl td">$ Note: Pyodide (~30MB) loads from CDN on first run.</div>
+        <div class="tl" id="cursor-line"><span class="blink" style="color:var(--tgreen)">█</span></div>
+      </div>
+
+      <!-- footer -->
+      <div class="term-footer">
+        <button class="btn-train" id="start-btn" onclick="startTraining()">
+          <span>▶</span> Start Training
+        </button>
+        <button class="btn-continue" id="cont-btn" onclick="goTo(2)">
+          Continue to Test Model →
+        </button>
+        <span class="term-status" id="term-status">Pyodide loads ~10–30s on first run</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       STEP 2 — TEST
+  ══════════════════════════════════════════════════════ -->
+  <div class="panel" id="p2">
+    <div class="sec-hdr">
+      <h2>Step 2 — <em>Test the Model</em></h2>
+      <p>Drag any slider to see the credit score update in real time using pure JavaScript inference — no Python needed.</p>
+    </div>
+
+    <div class="s2-grid">
+      <!-- sliders -->
+      <div class="card">
+        <div class="card-title">📊 Input Signals</div>
+
+        <div class="sl-row">
+          <div class="sl-hdr">
+            <span class="sl-lbl">Mobile Payments</span>
+            <span class="sl-val" id="lv-mp">8 months</span>
+          </div>
+          <input type="range" id="sl-mp" min="0" max="12" step="1" value="8" oninput="syncSlider('mp');infer()">
+        </div>
+
+        <div class="sl-row">
+          <div class="sl-hdr">
+            <span class="sl-lbl">UPI Monthly Avg</span>
+            <span class="sl-val" id="lv-upi">₹42,000</span>
+          </div>
+          <input type="range" id="sl-upi" min="0" max="100000" step="2000" value="42000" oninput="syncSlider('upi');infer()">
+        </div>
+
+        <div class="sl-row">
+          <div class="sl-hdr">
+            <span class="sl-lbl">Geo Stability</span>
+            <span class="sl-val" id="lv-geo">Stable</span>
+          </div>
+          <input type="range" id="sl-geo" min="0" max="2" step="1" value="2" oninput="syncSlider('geo');infer()">
+        </div>
+
+        <div class="sl-row">
+          <div class="sl-hdr">
+            <span class="sl-lbl">E-Commerce Score</span>
+            <span class="sl-val" id="lv-ec">0.72</span>
+          </div>
+          <input type="range" id="sl-ec" min="0" max="1" step="0.01" value="0.72" oninput="syncSlider('ec');infer()">
+        </div>
+
+        <div class="sl-row">
+          <div class="sl-hdr">
+            <span class="sl-lbl">Psychometric Score</span>
+            <span class="sl-val" id="lv-ps">0.81</span>
+          </div>
+          <input type="range" id="sl-ps" min="0" max="1" step="0.01" value="0.81" oninput="syncSlider('ps');infer()">
+        </div>
+
+        <div class="sl-row">
+          <div class="sl-hdr">
+            <span class="sl-lbl">GST Rating</span>
+            <span class="sl-val" id="lv-gst">4.2 ★</span>
+          </div>
+          <input type="range" id="sl-gst" min="1" max="5" step="0.1" value="4.2" oninput="syncSlider('gst');infer()">
+        </div>
+
+        <button class="predict-btn" onclick="infer()">🔮 Predict Score</button>
+      </div>
+
+      <!-- score display -->
+      <div class="score-card">
+        <div class="card-title">⚡ Live Prediction</div>
+
+        <div class="score-big">
+          <div class="score-num" id="score-num">—</div>
+          <div class="score-lbl">Sahay Alternate Credit Score (SACS)</div>
+        </div>
+
+        <div class="score-bar-wrap">
+          <div class="score-bar-fill" id="score-bar" style="width:0%"></div>
+        </div>
+
+        <div class="elig-badge" id="elig-badge">
+          Drag sliders or click "Predict Score"
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric"><div class="metric-val" id="m-rate">—</div><div class="metric-lbl">Interest Rate</div></div>
+          <div class="metric"><div class="metric-val" id="m-tier">—</div><div class="metric-lbl">Credit Tier</div></div>
+          <div class="metric"><div class="metric-val" id="m-loan">—</div><div class="metric-lbl">Max Loan</div></div>
+          <div class="metric"><div class="metric-val" id="m-conf">—</div><div class="metric-lbl">Confidence</div></div>
+        </div>
+
+        <button class="next-btn" onclick="goTo(3)">Export Model →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       STEP 3 — EXPORT
+  ══════════════════════════════════════════════════════ -->
+  <div class="panel" id="p3">
+    <div class="sec-hdr">
+      <h2>Step 3 — <em>Export Model File</em></h2>
+      <p>Download the trained model as a portable JSON file, ready for deployment on GitHub Pages or any CDN.</p>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <button class="dl-btn" onclick="downloadModel()">
+        <span class="dl-icon">⬇</span> Download sahay_credit_model.json
+      </button>
+
+      <div class="mstats">
+        <div class="mstat"><div class="mstat-val" id="ex-r2">—</div><div class="mstat-lbl">R² Score</div></div>
+        <div class="mstat"><div class="mstat-val">100</div><div class="mstat-lbl">Trees (GBR)</div></div>
+        <div class="mstat"><div class="mstat-val" id="ex-size">—</div><div class="mstat-lbl">File Size</div></div>
+        <div class="mstat"><div class="mstat-val">4,000</div><div class="mstat-lbl">Train Samples</div></div>
+      </div>
+
+      <div class="json-lbl">Model JSON Preview</div>
+      <div class="json-view" id="json-view">Training not yet complete.</div>
+      <button class="copy-json-btn" id="copy-json-btn" onclick="copyJson()">📋 Copy Full JSON</button>
+    </div>
+
+    <div class="info-box">
+      <strong style="color:var(--sec)">Next step:</strong>
+      Upload <code>sahay_credit_model.json</code> to GitHub to deploy your model.
+      Follow the step-by-step guide below.
+    </div>
+
+    <div style="margin-top:14px">
+      <button class="next-btn" style="width:100%;padding:12px" onclick="goTo(4)">
+        GitHub Deployment Guide →
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       STEP 4 — GITHUB DEPLOY
+  ══════════════════════════════════════════════════════ -->
+  <div class="panel" id="p4">
+    <div class="sec-hdr">
+      <h2>Step 4 — <em>GitHub Deployment Guide</em></h2>
+      <p>Host your model on GitHub Pages for free — SahayCredit will fetch it in real time to score borrowers.</p>
+    </div>
+
+    <div class="gh-grid">
+      <!-- Card 1 -->
+      <div class="gh-card">
+        <div class="gh-num">Step 01 · Create Repo</div>
+        <div class="gh-title">📁 Create GitHub Repository</div>
+        <ul class="gh-steps">
+          <li>Go to <code>github.com/new</code></li>
+          <li>Name it: <code>sahay-credit-model</code></li>
+          <li>Set visibility to <strong>Public</strong></li>
+          <li>Check <strong>"Add a README file"</strong></li>
+          <li>Click <strong>Create repository</strong></li>
+        </ul>
+        <a class="gh-btn" href="https://github.com/new" target="_blank" rel="noopener">🔗 Open GitHub</a>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="gh-card">
+        <div class="gh-num">Step 02 · Upload File</div>
+        <div class="gh-title">⬆ Upload Your Model</div>
+        <ul class="gh-steps">
+          <li>Click <strong>"Add file"</strong> → <strong>"Upload files"</strong></li>
+          <li>Drag &amp; drop <code>sahay_credit_model.json</code></li>
+          <li>Commit message: <code>Add SahayCredit model v1</code></li>
+          <li>Click <strong>"Commit changes"</strong></li>
+          <li>Wait for the upload to complete</li>
+        </ul>
+        <button class="gh-btn" onclick="downloadModel()">⬇ Re-Download Model</button>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="gh-card">
+        <div class="gh-num">Step 03 · Enable Hosting</div>
+        <div class="gh-title">🌐 Enable GitHub Pages</div>
+        <ul class="gh-steps">
+          <li>Go to your repo's <strong>Settings</strong> tab</li>
+          <li>Click <strong>Pages</strong> in the left sidebar</li>
+          <li>Source: <code>Deploy from a branch</code></li>
+          <li>Branch: <code>main</code> → Folder: <code>/ (root)</code></li>
+          <li>Click <strong>Save</strong></li>
+        </ul>
+        <div class="warn-box">⏱ GitHub Pages takes 2–5 min to activate on first setup.</div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="gh-card">
+        <div class="gh-num">Step 04 · Get Your URL</div>
+        <div class="gh-title">🔗 Generate Model URL</div>
+        <ul class="gh-steps">
+          <li>Enter your GitHub username below</li>
+          <li>Copy the generated model URL</li>
+          <li>Paste it into your SahayCredit app</li>
+        </ul>
+        <div style="margin-top:12px">
+          <input class="url-inp" type="text" id="gh-user" placeholder="your-github-username" oninput="genURL()">
+        </div>
+        <div class="url-result" id="url-r">
+          <span class="url-txt" id="url-t"></span>
+          <button class="copy-url-btn" onclick="cpURL('url-t','copy-url-btn')">Copy</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- URL generator full panel -->
+    <div class="url-card">
+      <div class="url-card-title">🎉 Your Live Model Endpoint</div>
+      <div class="url-card-sub">Once GitHub Pages is live, use this URL to fetch real predictions from your SahayCredit app.</div>
+
+      <div class="url-inp-row">
+        <span class="url-inp-lbl">GitHub username:</span>
+        <input class="url-inp" type="text" id="gh-user2" placeholder="Enter your GitHub username..." oninput="genURL2()">
+      </div>
+
+      <div class="url-result" id="url-r2">
+        <div style="display:flex;flex-direction:column;gap:6px;flex:1">
+          <div style="font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--tmut)">Your Model Endpoint URL</div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="url-txt" id="url-t2" style="font-size:0.75rem"></span>
+            <button class="copy-url-btn" id="copy-url-btn2" onclick="cpURL('url-t2','copy-url-btn2')">Copy URL</button>
+          </div>
+          <div style="font-size:0.72rem;color:var(--sec);font-weight:600;margin-top:4px">
+            ✅ Paste this URL into your SahayCredit config to enable real-time AI credit scoring!
+          </div>
+        </div>
+      </div>
+
+      <div class="url-placeholder" id="url-ph">
+        ☝ Enter your GitHub username above to generate your model URL.
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ══════════════════════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════════════════════ -->
+<script>
+/* ── STATE ─────────────────────────────────────────────────── */
+let pyodide   = null;
+let modelData = null;   // parsed object
+let modelJson = null;   // raw string
+let step      = 1;
+
+/* ── TERMINAL HELPERS ──────────────────────────────────────── */
+const tOut = document.getElementById('term-out');
+
+function tw(text, cls = '') {
+  // Remove cursor
+  const cur = document.getElementById('cursor-line');
+  if (cur) cur.remove();
+  // Add line
+  const d = document.createElement('div');
+  d.className = 'tl' + (cls ? ' ' + cls : '');
+  d.textContent = text;
+  tOut.appendChild(d);
+  // Re-add cursor
+  const cl = document.createElement('div');
+  cl.id = 'cursor-line';
+  cl.innerHTML = '<span class="blink" style="color:var(--tgreen)">█</span>';
+  tOut.appendChild(cl);
+  tOut.scrollTop = tOut.scrollHeight;
+}
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ── STEP NAVIGATION ───────────────────────────────────────── */
+function goTo(n) {
+  // Guard: step 2 requires trained model
+  if (n >= 2 && !modelData) {
+    alert('Please complete Step 1 (train the model) first.');
+    return;
+  }
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('p' + n).classList.add('active');
+
+  for (let i = 1; i <= 4; i++) {
+    const si = document.getElementById('si-' + i);
+    si.classList.remove('active', 'done');
+    if (i < n) si.classList.add('done');
+    if (i === n) si.classList.add('active');
+    document.getElementById('sc-' + i).textContent = (i < n) ? '✓' : String(i);
+  }
+  for (let i = 1; i <= 3; i++) {
+    document.getElementById('sco-' + i).classList.toggle('done', i < n);
+  }
+  step = n;
+
+  if (n === 3) setupExport();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ── DYNAMIC PYODIDE LOADER ────────────────────────────────── */
+function loadPyodideScript() {
+  return new Promise((res, rej) => {
+    if (typeof loadPyodide !== 'undefined') { res(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js';
+    s.onload  = res;
+    s.onerror = () => rej(new Error('Failed to load Pyodide from CDN'));
+    document.head.appendChild(s);
+  });
+}
+
+/* ── STEP 1: TRAINING ──────────────────────────────────────── */
+async function startTraining() {
+  const startBtn = document.getElementById('start-btn');
+  const status   = document.getElementById('term-status');
+  startBtn.disabled = true;
+
+  tw('$ SahayCredit ML Training Pipeline v1.0', 'tc');
+  tw('$ ─────────────────────────────────────────────────', 'td');
+  await sleep(120);
+
+  /* 1. Load Pyodide script */
+  tw('$ Fetching Pyodide runtime from CDN...', 'tc');
+  status.textContent = 'Downloading Pyodide (~30MB) — please wait...';
+  try {
+    await loadPyodideScript();
+  } catch (e) {
+    tw('✗ CDN fetch failed: ' + e.message, 'te');
+    tw('  Check your internet connection and try again.', 'te');
+    startBtn.disabled = false;
+    return;
+  }
+  tw('✓ Pyodide script loaded', 'ts');
+
+  /* 2. Initialize Python interpreter */
+  tw('$ Initializing Python/WebAssembly interpreter...', 'tc');
+  const t0 = Date.now();
+  try {
+    pyodide = await loadPyodide({
+      indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.25.0/full/'
+    });
+  } catch (e) {
+    tw('✗ Python initialization failed: ' + e.message, 'te');
+    startBtn.disabled = false;
+    return;
+  }
+  tw('✓ Python 3.11 (Pyodide) ready in ' + ((Date.now()-t0)/1000).toFixed(1) + 's', 'ts');
+
+  /* 3. Install packages */
+  tw('$ Installing packages: numpy, pandas, scikit-learn...', 'tc');
+  status.textContent = 'Installing packages (~20s) ...';
+  const t1 = Date.now();
+  try {
+    await pyodide.loadPackage(['numpy', 'pandas', 'scikit-learn']);
+  } catch (e) {
+    tw('✗ Package install failed: ' + e.message, 'te');
+    startBtn.disabled = false;
+    return;
+  }
+  tw('✓ numpy + pandas + scikit-learn installed in ' + ((Date.now()-t1)/1000).toFixed(1) + 's', 'ts');
+  await sleep(80);
+
+  /* 4. Generate synthetic data */
+  tw('$ Generating 5,000 synthetic borrower records...', 'tc');
+  try {
+    await pyodide.runPythonAsync(`
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
+import json
+
+np.random.seed(42)
+N = 5000
+
+mobile_payments    = np.random.randint(0, 13, N).astype(float)
+upi_monthly_avg    = np.random.randint(0, 100001, N).astype(float)
+geo_stability      = np.random.randint(0, 3, N).astype(float)
+ecommerce_score    = np.round(np.random.uniform(0, 1, N), 2)
+psychometric_score = np.round(np.random.uniform(0, 1, N), 2)
+gst_rating         = np.round(np.random.uniform(1, 5, N), 1)
+
+raw = (
+    mobile_payments    * 35 +
+    upi_monthly_avg    / 1000 * 12 +
+    geo_stability      * 60 +
+    ecommerce_score    * 80 +
+    psychometric_score * 100 +
+    gst_rating         * 25
+)
+
+scaler = MinMaxScaler(feature_range=(300, 900))
+scores = scaler.fit_transform(raw.reshape(-1, 1)).flatten().round(0).astype(int)
+
+X = np.column_stack([mobile_payments, upi_monthly_avg, geo_stability,
+                     ecommerce_score, psychometric_score, gst_rating])
+y = scores
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+`);
+  } catch (e) {
+    tw('✗ Data generation failed: ' + e.message, 'te');
+    startBtn.disabled = false;
+    return;
+  }
+  tw('✓ 5,000 records: X=(5000, 6 signals) | y=(5000, scores 300–900)', 'ts');
+  tw('✓ Split: 4,000 train samples | 1,000 test samples', 'ts');
+  await sleep(80);
+
+  /* 5. Initialize model (first 10 trees) */
+  tw('$ Initializing GradientBoostingRegressor(n_estimators=100, depth=4)...', 'tc');
+  tw('$ Training trees (warm_start: 10 per batch) — may take 15–40s...', 'td');
+  status.textContent = 'Training — browser may appear slow. Do not close.';
+  await sleep(80);
+
+  try {
+    await pyodide.runPythonAsync(`
+model = GradientBoostingRegressor(
+    n_estimators=10, max_depth=4, learning_rate=0.1,
+    random_state=42, warm_start=True
+)
+model.fit(X_train, y_train)
+`);
+    tw('  ⟶ Trained trees   10 / 100  ▓▓░░░░░░░░', 'tp');
+  } catch (e) {
+    tw('✗ Model init failed: ' + e.message, 'te');
+    startBtn.disabled = false;
+    return;
+  }
+
+  /* 6. Warm-start: add 10 trees per batch */
+  const BARS = ['▓▓▓▓░░░░░░','▓▓▓▓▓▓░░░░','▓▓▓▓▓▓▓▓░░','▓▓▓▓▓▓▓▓▓▓'];
+  for (let i = 20; i <= 100; i += 10) {
+    try {
+      await pyodide.runPythonAsync(`
+model.n_estimators = ${i}
+model.fit(X_train, y_train)
+`);
+      const bar = i <= 40 ? BARS[0] : i <= 60 ? BARS[1] : i <= 80 ? BARS[2] : BARS[3];
+      tw(`  ⟶ Trained trees  ${String(i).padStart(3)} / 100  ${bar}`, 'tp');
+      await sleep(40); // yield for repaint
+    } catch (e) {
+      tw('✗ Training failed at tree ' + i + ': ' + e.message, 'te');
+      startBtn.disabled = false;
+      return;
+    }
+  }
+
+  /* 7. Evaluate & export JSON */
+  tw('$ Evaluating model on test set...', 'tc');
+  let rawJson;
+  try {
+    rawJson = await pyodide.runPythonAsync(`
+r2 = model.score(X_test, y_test)
+
+trees_data = []
+for est in model.estimators_.flatten():
+    tree = est.tree_
+    trees_data.append({
+        "children_left":  tree.children_left.tolist(),
+        "children_right": tree.children_right.tolist(),
+        "feature":        tree.feature.tolist(),
+        "threshold":      tree.threshold.tolist(),
+        "value":          tree.value.flatten().tolist()
+    })
+
+model_json = json.dumps({
+    "n_estimators":  100,
+    "learning_rate": 0.1,
+    "init_score":    float(np.mean(y_train)),
+    "trees":         trees_data,
+    "r2_score":      float(r2)
+})
+
+model_json
+`);
+  } catch (e) {
+    tw('✗ Export failed: ' + e.message, 'te');
+    startBtn.disabled = false;
+    return;
+  }
+
+  window.sahayCreditModel = rawJson;
+  modelJson  = rawJson;
+  modelData  = JSON.parse(rawJson);
+
+  const r2   = modelData.r2_score.toFixed(4);
+  const szKB = Math.round(rawJson.length / 1024);
+
+  tw('', 'td');
+  tw('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'td');
+  tw('✅  Model trained successfully!', 'tb');
+  tw('   R² Score:          ' + r2, 'tr');
+  tw('   Algorithm:         GradientBoostingRegressor', 'tr');
+  tw('   Trees:             100  |  Max depth: 4', 'tr');
+  tw('   Learning rate:     0.1', 'tr');
+  tw('   Training samples:  4,000', 'tr');
+  tw('   Test samples:      1,000', 'tr');
+  tw('   Model size:        ~' + szKB + 'KB (JSON)', 'tr');
+  tw('   Init score:        ' + modelData.init_score.toFixed(2), 'tr');
+  tw('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'td');
+  tw('$ window.sahayCreditModel → ready for inference', 'tc');
+
+  status.textContent = '✅ Training complete!';
+  const cb = document.getElementById('cont-btn');
+  cb.style.display = 'inline-flex';
+  cb.style.opacity = '0';
+  setTimeout(() => { cb.style.transition = 'opacity .4s'; cb.style.opacity = '1'; }, 50);
+
+  launchConfetti();
+  // Run initial inference
+  infer();
+}
+
+/* ── JS INFERENCE ENGINE ───────────────────────────────────── */
+function predictScore(m, inputs) {
+  let score = m.init_score;
+  for (const tree of m.trees) {
+    let node = 0;
+    while (tree.children_left[node] !== -1) {
+      node = inputs[tree.feature[node]] <= tree.threshold[node]
+           ? tree.children_left[node]
+           : tree.children_right[node];
+    }
+    score += m.learning_rate * tree.value[node];
+  }
+  return Math.min(900, Math.max(300, Math.round(score)));
+}
+
+/* ── SLIDER SYNC ───────────────────────────────────────────── */
+const SLIDERS = {
+  mp:  { fmt: v => `${v} month${v==1?'':'s'}` },
+  upi: { fmt: v => '₹' + parseInt(v).toLocaleString('en-IN') },
+  geo: { fmt: v => ['Unstable','Moderate','Stable'][+v] },
+  ec:  { fmt: v => parseFloat(v).toFixed(2) },
+  ps:  { fmt: v => parseFloat(v).toFixed(2) },
+  gst: { fmt: v => parseFloat(v).toFixed(1) + ' ★' },
+};
+
+function syncSlider(id) {
+  const v = document.getElementById('sl-' + id).value;
+  document.getElementById('lv-' + id).textContent = SLIDERS[id].fmt(v);
+}
+
+function initSliders() {
+  Object.keys(SLIDERS).forEach(id => syncSlider(id));
+}
+
+function infer() {
+  if (!modelData) return;
+  const inputs = [
+    +document.getElementById('sl-mp').value,
+    +document.getElementById('sl-upi').value,
+    +document.getElementById('sl-geo').value,
+    +document.getElementById('sl-ec').value,
+    +document.getElementById('sl-ps').value,
+    +document.getElementById('sl-gst').value,
+  ];
+  const score = predictScore(modelData, inputs);
+  const col   = score >= 700 ? '#02C39A' : score >= 600 ? '#F4A261' : '#e74c3c';
+
+  // Score number
+  const sn = document.getElementById('score-num');
+  sn.textContent = score;
+  sn.style.color = col;
+  sn.classList.remove('pop');
+  void sn.offsetWidth;
+  sn.classList.add('pop');
+
+  // Progress bar
+  const pct = ((score - 300) / 600) * 100;
+  const bar = document.getElementById('score-bar');
+  bar.style.width      = pct + '%';
+  bar.style.background = col;
+
+  // Eligibility
+  const eb = document.getElementById('elig-badge');
+  if (score >= 600) {
+    eb.className = 'elig-badge elig-yes';
+    eb.textContent = '✅ ELIGIBLE for a loan';
+  } else {
+    eb.className = 'elig-badge elig-no';
+    eb.textContent = '❌ NOT ELIGIBLE at this time';
+  }
+
+  // Metrics
+  const rate = score>=700 ? '14% p.a.' : score>=600 ? '18% p.a.' : 'N/A';
+  const tier = score>=750 ? 'Prime' : score>=700 ? 'Near-Prime' : score>=600 ? 'Sub-Prime' : 'Thin File';
+  const loan = score>=700 ? '₹2.5L' : score>=600 ? '₹1.2L' : '₹0';
+  const conf = Math.min(98, Math.round(55 + (score-300)/8)) + '%';
+  document.getElementById('m-rate').textContent = rate;
+  document.getElementById('m-tier').textContent = tier;
+  document.getElementById('m-loan').textContent = loan;
+  document.getElementById('m-conf').textContent = conf;
+}
+
+/* ── STEP 3: EXPORT ────────────────────────────────────────── */
+function setupExport() {
+  if (!modelData) return;
+  document.getElementById('ex-r2').textContent   = modelData.r2_score.toFixed(4);
+  document.getElementById('ex-size').textContent = '~' + Math.round(modelJson.length/1024) + 'KB';
+
+  const preview = modelJson.length > 1400
+    ? modelJson.slice(0, 1400) + '\n\n... [' + Math.round((modelJson.length-1400)/1024) + 'KB more — use Copy button for full JSON]'
+    : modelJson;
+  document.getElementById('json-view').textContent = preview;
+}
+
+function downloadModel() {
+  if (!modelJson) { alert('Model not trained yet. Complete Step 1 first.'); return; }
+  const blob = new Blob([modelJson], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'sahay_credit_model.json';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function copyJson() {
+  if (!modelJson) return;
+  navigator.clipboard.writeText(modelJson).then(() => {
+    const btn = document.getElementById('copy-json-btn');
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => { btn.textContent = '📋 Copy Full JSON'; }, 2000);
+  });
+}
+
+/* ── STEP 4: GITHUB ────────────────────────────────────────── */
+function _buildURL(username) {
+  return `https://${username}.github.io/sahay-credit-model/sahay_credit_model.json`;
+}
+
+function genURL() {
+  const u = document.getElementById('gh-user').value.trim();
+  const r = document.getElementById('url-r');
+  const t = document.getElementById('url-t');
+  if (!u) { r.classList.remove('show'); return; }
+  t.textContent = _buildURL(u);
+  r.classList.add('show');
+  // Sync with card2
+  document.getElementById('gh-user2').value = u;
+  genURL2();
+}
+
+function genURL2() {
+  const u  = document.getElementById('gh-user2').value.trim();
+  const r2 = document.getElementById('url-r2');
+  const t2 = document.getElementById('url-t2');
+  const ph = document.getElementById('url-ph');
+  if (!u) { r2.style.display='none'; ph.style.display='block'; return; }
+  t2.textContent = _buildURL(u);
+  r2.style.display = 'flex';
+  ph.style.display = 'none';
+  // Sync with card4
+  document.getElementById('gh-user').value = u;
+  document.getElementById('url-t').textContent = _buildURL(u);
+  document.getElementById('url-r').classList.add('show');
+}
+
+function cpURL(txtId, btnId) {
+  const url = document.getElementById(txtId).textContent;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById(btnId);
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 2000);
+  });
+}
+
+/* ── CONFETTI ──────────────────────────────────────────────── */
+function launchConfetti() {
+  const cv = document.createElement('canvas');
+  cv.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9999';
+  document.body.appendChild(cv);
+  const ctx = cv.getContext('2d');
+  cv.width  = window.innerWidth;
+  cv.height = window.innerHeight;
+
+  const COLS = ['#02C39A','#028090','#F4A261','#FFFFFF','#FFDE59','#ff6b9d','#6C63FF'];
+  const pieces = Array.from({length:200}, () => ({
+    x:  Math.random() * cv.width,
+    y:  -20 - Math.random() * 80,
+    w:  Math.random() * 11 + 5,
+    h:  Math.random() * 6 + 3,
+    c:  COLS[Math.floor(Math.random()*COLS.length)],
+    vx: (Math.random()-.5) * 4.5,
+    vy: Math.random() * 3 + 1.5,
+    rot: Math.random() * 360,
+    rv: (Math.random()-.5) * 9,
+  }));
+
+  let f = 0;
+  const tick = () => {
+    ctx.clearRect(0,0,cv.width,cv.height);
+    pieces.forEach(p => {
+      p.x+=p.vx; p.y+=p.vy; p.rot+=p.rv; p.vy+=0.06;
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, 1 - f/180);
+      ctx.translate(p.x,p.y);
+      ctx.rotate(p.rot*Math.PI/180);
+      ctx.fillStyle = p.c;
+      ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+      ctx.restore();
+    });
+    f++;
+    if (f < 220) requestAnimationFrame(tick);
+    else cv.remove();
+  };
+  requestAnimationFrame(tick);
+}
+
+/* ── INIT ──────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', initSliders);
+</script>
+</body>
+</html>
