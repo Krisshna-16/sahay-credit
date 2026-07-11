@@ -3,6 +3,27 @@
 > **Empowering 1.3 billion Indians who deserve access to credit.**  
 > An AI-powered alternate credit scoring platform for thin-file borrowers — MSMEs, gig workers, rural entrepreneurs — who are invisible to traditional CIBIL scoring.
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/hunny0025/SahayCredit)
+
+---
+
+## 🚀 Quick Deploy
+
+### Option 1: One-Click Deploy to Render (Recommended)
+Click the **Deploy to Render** button above. It will:
+1. Fork the repo to your Render account
+2. Build & deploy the Node.js backend + frontend automatically
+3. Give you a live URL in ~2 minutes
+
+### Option 2: Local Development
+```bash
+git clone https://github.com/hunny0025/SahayCredit.git
+cd SahayCredit
+npm install
+npm start
+# Open http://localhost:3000
+```
+
 ---
 
 ## 🌟 What Is SahayCredit?

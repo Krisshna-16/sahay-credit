@@ -1,0 +1,21 @@
+{
+  "services": [
+    {
+      "type": "web",
+      "runtime": "node",
+      "name": "sahaycredit",
+      "plan": "free",
+      "buildCommand": "npm install",
+      "startCommand": "npm start",
+      "envVars": [
+        {
+          "key": "NODE_ENV",
+          "value": "production"
+        }
+      ],
+      "autoDeploy": true,
+      "repo": "https://github.com/hunny0025/SahayCredit.git",
+      "branch": "main"
+    }
+  ]
+}
