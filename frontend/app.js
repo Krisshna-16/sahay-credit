@@ -488,7 +488,20 @@ const UI_TRANSLATIONS = {
 // Application State
 let state = {
   borrowerId: 'borrower-' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36),
-  deviceFingerprint: btoa(navigator.userAgent + '_' + screen.width + 'x' + screen.height + '_' + navigator.language),
+  deviceFingerprint: (function() {
+    let devId = null;
+    try {
+      devId = localStorage.getItem('sahay_device_id');
+      if (!devId) {
+        devId = 'dev-' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+        localStorage.setItem('sahay_device_id', devId);
+      }
+    } catch (e) {
+      // LocalStorage access blocked (e.g. in some incognito settings)
+      devId = 'dev-incognito-' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+    }
+    return devId;
+  })(),
   currentLanguage: 'en', // 'en' or 'hi'
   currentScreen: 'welcome-screen',
   currentQuestionIndex: 0,
