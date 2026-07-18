@@ -509,6 +509,7 @@ let state = {
   scoreData: null,
   consents: { upi: true, bills: true, ecom: true, location: true, gst: true },
   signatureName: '',
+  borrowerName: '',
   
   // Simulator Parameters
   simState: {
@@ -1035,6 +1036,22 @@ function bindEvents() {
       const pan = ekycPanInput.value.trim().toUpperCase();
       const name = ekycNameInput.value.trim();
 
+      // Lock the name into state so both name fields are always identical
+      if (name.length >= 2) {
+        state.borrowerName = name;
+        state.signatureName = name;
+        // Auto-fill the consent screen signature field with the same name
+        const sigInput = document.getElementById('signature-input');
+        if (sigInput) {
+          sigInput.value = name;
+          sigInput.readOnly = true;
+          sigInput.style.opacity = '0.7';
+          sigInput.title = 'Name locked from eKYC — cannot be changed';
+        }
+        // Also ensure the proceed button is enabled
+        if (dom.consentProceedBtn) dom.consentProceedBtn.disabled = false;
+      }
+
       // Hide input, show verifying
       document.getElementById('ekyc-step-input').style.display = 'none';
       document.getElementById('ekyc-step-verifying').style.display = 'block';
@@ -1334,7 +1351,7 @@ function translateUI() {
 async function submitAnswersToAPI() {
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000); // 8s timeout for composite
+    const timeout = setTimeout(() => controller.abort(), 15000); // 15s — server needs time for ML scoring
 
     // Use the session borrower ID for consent tracking
     const borrowerId = state.borrowerId;
@@ -1368,6 +1385,8 @@ async function submitAnswersToAPI() {
     const requestBody = {
       answers: state.answers,
       borrowerId,
+      // Send the real borrower name so the lender dashboard shows it correctly
+      borrowerName: state.borrowerName || state.signatureName || null,
       deviceFingerprint: state.deviceFingerprint
     };
 
@@ -1676,10 +1695,25 @@ function startProcessingAnimation() {
         if (success) {
           navigateTo('result-screen');
         } else {
-          // API unavailable (GitHub Pages / offline) — use client-side engine
+          // API timed out — use client-side engine for the score display
           console.info('SahayCredit: API unreachable, using client-side scoring engine.');
           state.scoreData = calculateScoreClientSide(state.answers);
           navigateTo('result-screen');
+
+          // Still register with the server (fire-and-forget) so lender dashboard
+          // always shows this borrower regardless of which scoring path ran.
+          if (state.borrowerId && state.scoreData) {
+            fetch('/api/applicant/register', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                borrowerId: state.borrowerId,
+                score: state.scoreData.score,
+                borrowerName: state.borrowerName || state.signatureName || null,
+                isMSME: false
+              })
+            }).catch(() => { /* non-fatal — lender dashboard will show borrower on next server load */ });
+          }
         }
       });
     }

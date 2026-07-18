@@ -1,6 +1,28 @@
 const express = require('express');
 const path = require('path');
 const http = require('http');
+const fs = require('fs');
+
+// Manually parse .env file if it exists
+try {
+  const envPath = path.join(__dirname, '../.env');
+  if (fs.existsSync(envPath)) {
+    const envConfig = fs.readFileSync(envPath, 'utf8');
+    envConfig.split('\n').forEach(line => {
+      const parts = line.split('=');
+      if (parts.length >= 2) {
+        const key = parts[0].trim();
+        const value = parts.slice(1).join('=').trim().replace(/(^['"]|['"]$)/g, ''); // trim quotes
+        if (key && !key.startsWith('#')) {
+          process.env[key] = value;
+        }
+      }
+    });
+  }
+} catch (err) {
+  console.error('Error loading .env file:', err);
+}
+
 const { loadModel, loadPdoCalibration, calculateScore, scoreApplication } = require('./scoring');
 const { analyzeFraud } = require('./fraud');
 const { grantConsent, revokeConsent, getConsentSummary, getAuditLog } = require('./consent');
@@ -15,6 +37,7 @@ const { performBureauCheck, getBureauAuditLog } = require('./bureauCheck');
 const { sendOtp, verifyOtp, getOtpAuditLog } = require('./otp');
 const { login, refreshAccessToken, authMiddleware, requireRole, rateLimit, sanitizeInput, httpsRedirect } = require('./auth');
 const { encrypt, decrypt } = require('./encryption');
+const { loadSavedApplications, saveApplication } = require('./persistence');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -374,10 +397,26 @@ function callMlScoringService(appRecord) {
 
 // ── Applications API with Fraud Detection ───────────────────────────────────
 app.get('/api/applications', async (req, res) => {
-  // Call Python ML service for all applications in parallel (2s timeout, graceful fallback)
-  const mlResults = await Promise.all(applications.map(a => callMlScoringService(a)));
+  const savedApps = loadSavedApplications();
+  // Sort saved (real) applicants newest-first — borrower IDs encode a timestamp,
+  // and the register endpoint also stores a submittedAt timestamp.
+  const sortedSavedApps = savedApps.sort((a, b) => {
+    const tA = a.submittedAt ? new Date(a.submittedAt).getTime() : 0;
+    const tB = b.submittedAt ? new Date(b.submittedAt).getTime() : 0;
+    return tB - tA; // descending — newest first
+  });
+  const demoAppsFiltered = applications.filter(demoApp => !sortedSavedApps.some(saved => saved.id === demoApp.id));
+  const combinedApps = [...sortedSavedApps, ...demoAppsFiltered];
 
-  const enhancedApps = applications.map((appRecord, idx) => {
+  // Only re-score applicants that don't already have a saved ML score.
+  // Skipping already-scored apps makes the dashboard load fast instead of
+  // waiting 2s per applicant × 12 apps = potential 8s+ delay that causes
+  // the browser fetch to time out on the borrower side.
+  const mlResults = await Promise.all(
+    combinedApps.map(a => a.mlCreditScore ? Promise.resolve(null) : callMlScoringService(a))
+  );
+
+  const enhancedApps = combinedApps.map((appRecord, idx) => {
     // Run fraud analysis using the new fraud module
     let deviceCount = 1;
     let velocityMismatch = false;
@@ -432,10 +471,10 @@ app.get('/api/applications', async (req, res) => {
       compositeWeights,
       sourceCount,
       // ── Real ML score from Python fraud_credit_service ──
-      mlCreditScore: mlResults[idx] ? mlResults[idx].mlCreditScore : null,
-      mlRiskLevel:   mlResults[idx] ? mlResults[idx].mlRiskLevel   : null,
-      mlDefaultProb: mlResults[idx] ? mlResults[idx].mlDefaultProb : null,
-      mlReasonCodes: mlResults[idx] ? mlResults[idx].mlReasonCodes : null
+      mlCreditScore: mlResults[idx] ? mlResults[idx].mlCreditScore : (appRecord.mlCreditScore || null),
+      mlRiskLevel:   mlResults[idx] ? mlResults[idx].mlRiskLevel   : (appRecord.mlRiskLevel || null),
+      mlDefaultProb: mlResults[idx] ? mlResults[idx].mlDefaultProb : (appRecord.mlDefaultProb || null),
+      mlReasonCodes: mlResults[idx] ? mlResults[idx].mlReasonCodes : (appRecord.mlReasonCodes || null)
     };
   });
   res.json({
@@ -457,7 +496,9 @@ app.patch('/api/applications/:id', (req, res) => {
     });
   }
 
-  const appRecord = applications.find(a => a.id === id);
+  const savedApps = loadSavedApplications();
+  let appRecord = applications.find(a => a.id === id) || savedApps.find(a => a.id === id);
+
   if (!appRecord) {
     return res.status(404).json({
       success: false,
@@ -466,6 +507,19 @@ app.patch('/api/applications/:id', (req, res) => {
   }
 
   appRecord.status = status;
+
+  // Sync to in-memory array if present
+  const inMemIndex = applications.findIndex(a => a.id === id);
+  if (inMemIndex >= 0) {
+    applications[inMemIndex].status = status;
+  }
+
+  // Sync to persistent store if present
+  const savedIndex = savedApps.findIndex(a => a.id === id);
+  if (savedIndex >= 0) {
+    savedApps[savedIndex].status = status;
+    saveApplication(savedApps[savedIndex]);
+  }
 
   let deviceCount = 1;
   let velocityMismatch = false;
@@ -547,6 +601,89 @@ app.get('/api/consent/:borrowerId', (req, res) => {
 // Get consent audit log
 app.get('/api/consent-audit', (req, res) => {
   res.json({ success: true, data: getAuditLog() });
+});
+
+// ── Applicant Registration (fallback for client-side scoring engine) ──────────
+// Called by the frontend when /api/score times out and the client-side engine
+// is used instead. Saves the borrower so they still appear on the lender dashboard.
+app.post('/api/applicant/register', (req, res) => {
+  try {
+    const { borrowerId, score, isMSME, borrowerName } = req.body;
+    if (!borrowerId || typeof score !== 'number') {
+      return res.status(400).json({ success: false, error: 'borrowerId and score are required' });
+    }
+
+    const ekycStatus = getEkycStatus(borrowerId);
+    const ekycName = ekycStatus && ekycStatus.status === 'verified'
+      ? ekycStatus.details?.extractedFields?.name
+      : null;
+    // Prefer explicitly sent name, then eKYC, then fallback
+    const resolvedName = (borrowerName && borrowerName.trim().length > 1)
+      ? borrowerName.trim()
+      : (ekycName || 'Borrower Profile');
+
+    const newApplication = {
+      id: borrowerId,
+      name: resolvedName,
+      submittedAt: new Date().toISOString(),
+      score: score,
+      confidenceBand: 15,
+      loanAmount: isMSME ? 150000 : 35000,
+      suggestedRate: 18,
+      signalsCount: 6,
+      status: 'Review',
+      riskAttitude: isMSME ? 'Medium' : 'Low',
+      shapFactors: [],
+      signals: {
+        mobile: { rating: 75, detail: 'Active mobile billing and verification logs.' },
+        upi: { rating: 80, detail: 'Standard customer transaction velocity.' },
+        geo: { rating: 85, detail: 'Geographic verification matches location records.' },
+        psychometric: { rating: 70, detail: 'Assessed financial and risk dimension metrics.' },
+        ecommerce: { rating: 0, detail: 'Not shared / Opted out' },
+        merchantRatings: { rating: 0, detail: 'Not shared / Opted out' },
+        salaryConsistency: { rating: 65, value: 'Regular', detail: 'Salary credit pattern consistency.' },
+        failedTx: { rating: 100, value: '0', detail: 'Zero failed or bounced payments.' },
+        merchantDiversity: { rating: 50, value: 'Few', detail: 'Standard category distribution.' },
+        refundRatio: { rating: 100, value: 'Rarely', detail: 'Zero refund claims.' }
+      },
+      auditTrail: [
+        { timestamp: new Date().toISOString(), event: 'Application registered via client-side scoring engine (API fallback)' },
+        { timestamp: new Date().toISOString(), event: `Client-side score computed: ${score}` }
+      ]
+    };
+
+    // Attach eKYC identity fields (masked only — never raw)
+    if (ekycStatus) {
+      if (ekycStatus.documentType === 'aadhaar') {
+        newApplication.aadhaarMasked = ekycStatus.documentNumberMasked;
+        newApplication.aadhaarHash = ekycStatus.documentNumberHash;
+      } else if (ekycStatus.documentType === 'pan') {
+        newApplication.panMasked = ekycStatus.documentNumberMasked;
+        newApplication.panHash = ekycStatus.documentNumberHash;
+      }
+      if (ekycStatus.panNumberMasked) {
+        newApplication.panMasked = ekycStatus.panNumberMasked;
+        newApplication.panHash = ekycStatus.panNumberHash;
+      }
+    }
+
+    // Save to in-memory store
+    const existingIndex = applications.findIndex(a => a.id === borrowerId);
+    if (existingIndex >= 0) {
+      applications[existingIndex] = newApplication;
+    } else {
+      applications.push(newApplication);
+    }
+
+    // Save to persistent store (encrypted)
+    saveApplication(newApplication);
+
+    console.log(`[SahayCredit] Applicant registered via fallback: ${borrowerId} | score: ${score}`);
+    return res.json({ success: true, data: { borrowerId, score } });
+  } catch (err) {
+    console.error('[SahayCredit] Register error:', err);
+    return res.status(500).json({ success: false, error: 'Failed to register applicant' });
+  }
 });
 
 // ── Score API (main borrower scoring endpoint) ──────────────────────────────
@@ -637,7 +774,16 @@ app.post('/api/score', async (req, res) => {
 
     if (borrowerId) {
       const ekycStatus = getEkycStatus(borrowerId);
-      const borrowerName = ekycStatus && ekycStatus.status === 'verified' ? ekycStatus.details?.extractedFields?.name || "Borrower Profile" : "Borrower Profile";
+      // Use the name the borrower typed during the flow (sent in request body).
+      // The sandbox eKYC provider never returns a real name, so we always prefer
+      // the explicit borrowerName field. Fall back to eKYC extracted name only
+      // if borrowerName was not sent (older clients).
+      const ekycExtractedName = ekycStatus && ekycStatus.status === 'verified'
+        ? ekycStatus.details?.extractedFields?.name
+        : null;
+      const borrowerName = (req.body.borrowerName && req.body.borrowerName.trim().length > 1)
+        ? req.body.borrowerName.trim()
+        : (ekycExtractedName || 'Borrower Profile');
 
       const rawAadhaar = getAadhaarByBorrower(borrowerId);
       const deviceFingerprint = req.body.deviceFingerprint || req.headers['x-device-fingerprint'] || Buffer.from(req.headers['user-agent'] || '').toString('base64').slice(0, 32);
@@ -648,6 +794,7 @@ app.post('/api/score', async (req, res) => {
       const newApplication = {
         id: borrowerId,
         name: borrowerName,
+        submittedAt: new Date().toISOString(),
         score: extendedResult.score,
         confidenceBand: extendedResult.confidenceBand || 15,
         loanAmount: isMSME ? 150000 : 35000,
@@ -674,12 +821,30 @@ app.post('/api/score', async (req, res) => {
         ]
       };
 
+      const ekycRecord = getEkycStatus(borrowerId);
+      if (ekycRecord) {
+        if (ekycRecord.documentType === 'aadhaar') {
+          newApplication.aadhaarMasked = ekycRecord.documentNumberMasked;
+          newApplication.aadhaarHash = ekycRecord.documentNumberHash;
+        } else if (ekycRecord.documentType === 'pan') {
+          newApplication.panMasked = ekycRecord.documentNumberMasked;
+          newApplication.panHash = ekycRecord.documentNumberHash;
+        }
+        if (ekycRecord.panNumberMasked) {
+          newApplication.panMasked = ekycRecord.panNumberMasked;
+          newApplication.panHash = ekycRecord.panNumberHash;
+        }
+      }
+
       const existingIndex = applications.findIndex(a => a.id === borrowerId);
       if (existingIndex >= 0) {
         applications[existingIndex] = newApplication;
       } else {
         applications.push(newApplication);
       }
+
+      // Initial save to persistence store
+      saveApplication(newApplication);
     }
 
     // ── Call Python ML scoring service for this real borrower ──────────────
@@ -712,6 +877,9 @@ app.post('/api/score', async (req, res) => {
         applications[idx].mlRiskLevel   = mlResult.mlRiskLevel;
         applications[idx].mlDefaultProb = mlResult.mlDefaultProb;
         applications[idx].mlReasonCodes = mlResult.mlReasonCodes;
+
+        // Save to persistence store with ML scoring results
+        saveApplication(applications[idx]);
       }
     }
 
@@ -818,7 +986,8 @@ app.post('/api/ekyc/verify', rateLimit(5, 60 * 1000), (req, res) => {
       name,
       dob,
       selfieBase64,
-      deviceFingerprint
+      deviceFingerprint,
+      panNumber: req.body.panNumber
     });
 
     res.json({
