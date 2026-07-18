@@ -1,0 +1,68 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare static site
+        run: |
+          mkdir -p _site
+
+          # Copy all frontend files
+          cp -r frontend/* _site/
+
+          # Make borrower.html the default page at root
+          cp frontend/index.html _site/index.html
+
+          echo "=== Files in _site ==="
+          ls -la _site/
+
+      - name: Patch app.js for GitHub Pages
+        run: |
+          # On GitHub Pages there is no Node backend, so we patch the fetch
+          # URL base so relative /api/* calls gracefully fail fast (they will
+          # hit the Pages 404) and the client-side scoring engine kicks in.
+          # We also inject a visible banner so visitors know they're on the
+          # static demo (no live scoring from the ML server).
+          sed -i 's|const timeout = setTimeout(() => controller.abort(), 15000);|const timeout = setTimeout(() => controller.abort(), 3000); // fast fail on Pages|g' _site/app.js
+          echo "Patched fetch timeout for GitHub Pages (3s fast-fail)"
+
+      - name: Inject GitHub Pages notice into borrower.html
+        run: |
+          # Add a small banner below the nav so users know ML backend is not connected
+          NOTICE='<div id="gh-pages-notice" style="background:linear-gradient(90deg,#1a1a2e,#16213e);color:#00d4aa;text-align:center;padding:8px 16px;font-size:0.78rem;font-weight:600;letter-spacing:0.5px;border-bottom:1px solid #00d4aa33;">🔬 DEMO MODE — Client-side scoring engine active. ML server not connected on GitHub Pages.</div>'
+          sed -i "s|<body|${NOTICE}<body|g" _site/borrower.html
+          echo "Injected demo notice"
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '_site'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
