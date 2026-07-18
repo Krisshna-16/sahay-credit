@@ -209,6 +209,130 @@
           </div>
         </section>
 
+        <!-- ================= CREDIT BUREAU GATEWAY SCREEN ================= -->
+        <section id="bureau-gate-screen" class="app-screen">
+          <div class="consent-header">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+              <span style="font-size: 0.6rem; font-weight: 700; text-transform: uppercase; background: rgba(2, 128, 144, 0.15); color: #8ce1ec; padding: 3px 8px; border-radius: 12px; border: 1px solid rgba(2, 128, 144, 0.3); letter-spacing: 0.5px;">CREDIT BUREAU GATEWAY</span>
+            </div>
+            <h2 id="bureau-gate-title" class="consent-title">Check Eligibility</h2>
+            <p id="bureau-gate-subtitle" class="consent-desc">We first check if you already have a formal credit history. If you do, you can use the traditional banking process instead.</p>
+          </div>
+
+          <!-- Step 1: Identity Input Form -->
+          <div id="bureau-gate-form" class="rbi-step-container">
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+              <!-- Full Name -->
+              <div class="rbi-input-group">
+                <label for="bureau-name-input" class="rbi-input-label" style="display: flex; align-items: center; gap: 6px;">
+                  <span style="font-size: 0.85rem;">👤</span> <span id="bureau-lbl-name">Full Name</span> <span style="color: #e74c3c; font-size: 0.7rem;">*</span>
+                </label>
+                <input type="text" id="bureau-name-input" class="rbi-input-field-text" placeholder="e.g. Ramesh Kumar" autocomplete="off">
+              </div>
+
+              <!-- PAN Number -->
+              <div class="rbi-input-group">
+                <label for="bureau-pan-input" class="rbi-input-label" style="display: flex; align-items: center; gap: 6px;">
+                  <span style="font-size: 0.85rem;">📄</span> <span id="bureau-lbl-pan">PAN Number</span> <span style="color: #e74c3c; font-size: 0.7rem;">*</span>
+                </label>
+                <input type="text" id="bureau-pan-input" class="rbi-input-field-text" placeholder="e.g. ABCDE1234F" maxlength="10" autocomplete="off" style="text-transform: uppercase; letter-spacing: 1px; font-family: monospace;">
+                <p class="rbi-input-hint" style="font-size: 0.62rem; color: var(--text-muted); margin-top: 4px;">Format: 5 letters, 4 digits, 1 letter (e.g. ABCDE1234F)</p>
+              </div>
+
+              <!-- Date of Birth -->
+              <div class="rbi-input-group">
+                <label for="bureau-dob-input" class="rbi-input-label" style="display: flex; align-items: center; gap: 6px;">
+                  <span style="font-size: 0.85rem;">📅</span> <span id="bureau-lbl-dob">Date of Birth</span> <span style="color: #e74c3c; font-size: 0.7rem;">*</span>
+                </label>
+                <input type="date" id="bureau-dob-input" class="rbi-input-field-text" autocomplete="off" style="color: var(--text-main); background: rgba(10, 25, 47, 0.95);">
+              </div>
+
+              <!-- Mobile Number -->
+              <div class="rbi-input-group">
+                <label for="bureau-mobile-input" class="rbi-input-label" style="display: flex; align-items: center; gap: 6px;">
+                  <span style="font-size: 0.85rem;">📱</span> <span id="bureau-lbl-mobile">Mobile Number</span> <span style="color: #e74c3c; font-size: 0.7rem;">*</span>
+                </label>
+                <input type="tel" id="bureau-mobile-input" class="rbi-input-field-text" placeholder="e.g. 9876543210" maxlength="10" autocomplete="off" style="letter-spacing: 1px; font-family: monospace;" inputmode="numeric">
+                <p class="rbi-input-hint" style="font-size: 0.62rem; color: var(--text-muted); margin-top: 4px;">10-digit mobile number linked to your identity.</p>
+              </div>
+            </div>
+
+            <div class="action-footer" style="margin-top: 25px;">
+              <button id="bureau-check-btn" class="btn btn-primary btn-glow" disabled>
+                <span id="bureau-check-btn-text">Check Eligibility</span>
+                <span class="btn-icon">→</span>
+              </button>
+              <p style="font-size: 0.6rem; color: var(--text-muted); text-align: center; margin-top: 8px;">
+                🔒 Your identity is checked securely against bureau records.
+              </p>
+            </div>
+          </div>
+
+          <!-- Step 2: Checking Animation -->
+          <div id="bureau-gate-checking" class="rbi-step-container" style="display: none;">
+            <div class="rbi-status-header">
+              <div class="rbi-spinner">
+                <div class="spinner-circle"></div>
+              </div>
+              <h3 id="bureau-gate-check-status" class="rbi-status-title">Checking Bureau Records...</h3>
+            </div>
+            <div class="rbi-logs-container card-glow">
+              <div class="rbi-log-line" id="bureau-log-1">• Validating identity documents...</div>
+              <div class="rbi-log-line" id="bureau-log-2">• Querying credit bureau registry...</div>
+              <div class="rbi-log-line" id="bureau-log-3">• Analyzing credit history status...</div>
+            </div>
+          </div>
+
+          <!-- Step 3A: No Credit History — Eligible -->
+          <div id="bureau-gate-eligible" class="rbi-step-container" style="display: none;">
+            <div style="text-align: center; padding: 20px 0;">
+              <div style="font-size: 3rem; margin-bottom: 12px;">✅</div>
+              <h3 id="bureau-eligible-title" style="font-size: 1rem; font-weight: 700; color: var(--secondary); margin-bottom: 6px;">No Formal Credit History Found</h3>
+              <p id="bureau-eligible-desc" style="font-size: 0.78rem; color: var(--text-sub); line-height: 1.5; margin-bottom: 16px;">You are eligible for SahayCredit's alternative credit assessment. We'll use your digital footprint and behaviour data to build your credit profile.</p>
+            </div>
+            <div style="background: rgba(2, 195, 154, 0.06); border: 1px solid rgba(2, 195, 154, 0.15); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 6px;">
+              <div style="display: flex; justify-content: space-between; font-size: 0.68rem;">
+                <span style="color: var(--text-muted);">Status</span>
+                <span id="bureau-eligible-status" style="color: var(--secondary); font-weight: 700;">Eligible for SahayCredit ✓</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.68rem;">
+                <span style="color: var(--text-muted);">Source</span>
+                <span style="color: var(--warning); font-weight: 600;">Prototype Bureau (Sandbox)</span>
+              </div>
+            </div>
+            <div class="action-footer" style="margin-top: 20px;">
+              <button id="bureau-proceed-btn" class="btn btn-primary btn-glow">
+                <span id="bureau-proceed-btn-text">Continue to SahayCredit</span>
+                <span class="btn-icon">→</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Step 3B: Has Credit History — Stop -->
+          <div id="bureau-gate-blocked" class="rbi-step-container" style="display: none;">
+            <div style="text-align: center; padding: 20px 0;">
+              <div style="font-size: 3rem; margin-bottom: 12px;">🏦</div>
+              <h3 id="bureau-blocked-title" style="font-size: 1rem; font-weight: 700; color: var(--warning); margin-bottom: 6px;">Existing Credit History Detected</h3>
+              <p id="bureau-blocked-desc" style="font-size: 0.78rem; color: var(--text-sub); line-height: 1.5; margin-bottom: 16px;">You already have a formal credit record. Please use the standard banking credit assessment process. SahayCredit is designed for borrowers without existing credit history.</p>
+            </div>
+            <div style="background: rgba(244, 162, 97, 0.06); border: 1px solid rgba(244, 162, 97, 0.15); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 6px;">
+              <div style="display: flex; justify-content: space-between; font-size: 0.68rem;">
+                <span style="color: var(--text-muted);">Bureau Score</span>
+                <span id="bureau-blocked-score" style="color: var(--warning); font-weight: 700;">742</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.68rem;">
+                <span style="color: var(--text-muted);">Recommendation</span>
+                <span style="color: var(--text-sub); font-weight: 600;">Use Traditional Credit Process</span>
+              </div>
+            </div>
+            <div class="action-footer" style="margin-top: 20px;">
+              <button id="bureau-restart-btn" class="btn btn-secondary" style="width: 100%;">
+                <span id="bureau-restart-btn-text">← Try Different Identity</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
         <!-- ================= CONSENT & DATA-SHARING SCREEN ================= -->
         <section id="consent-screen" class="app-screen">
           <div class="consent-header">
