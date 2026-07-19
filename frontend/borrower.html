@@ -600,6 +600,31 @@
                 </select>
               </div>
             </div>
+          <!-- Financial Details (Monthly Income & Loan Requirement) -->
+          <div class="consent-financial-section card-glow" style="margin-top: 20px; padding: 20px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 20px;">
+            <h3 id="consent-financial-headline" class="rbi-section-label" style="margin-top: 0; margin-bottom: 15px; font-size: 0.85rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+              <span>💰</span> Monthly Income & Loan Requirement
+            </h3>
+            
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+              <!-- Monthly Income -->
+              <div class="rbi-input-group">
+                <label for="consent-income-input" class="rbi-input-label" style="display: flex; align-items: center; gap: 6px;">
+                  <span style="font-size: 0.85rem;">💰</span> Monthly Income (₹) <span style="color: #e74c3c; font-size: 0.7rem;">*</span>
+                </label>
+                <input type="number" id="consent-income-input" class="rbi-input-field-text" placeholder="e.g. 50000" min="1" step="1000" autocomplete="off" style="font-family: monospace;">
+                <p class="rbi-input-hint" style="font-size: 0.62rem; color: var(--text-muted); margin-top: 4px;">Enter your net monthly income in Rupees to evaluate affordability.</p>
+              </div>
+
+              <!-- Requested Loan Amount (Optional) -->
+              <div class="rbi-input-group">
+                <label for="consent-loan-input" class="rbi-input-label" style="display: flex; align-items: center; gap: 6px;">
+                  <span style="font-size: 0.85rem;">💳</span> Requested Loan Amount (₹) <span style="color: var(--text-muted); font-size: 0.68rem; font-weight: normal;">(Optional)</span>
+                </label>
+                <input type="number" id="consent-loan-input" class="rbi-input-field-text" placeholder="e.g. 100000 (Leave blank if not yet requested)" min="0" step="5000" autocomplete="off" style="font-family: monospace;">
+                <p class="rbi-input-hint" style="font-size: 0.62rem; color: var(--text-muted); margin-top: 4px;">Leave blank if you haven't decided on a specific loan amount yet.</p>
+              </div>
+            </div>
           </div>
 
           <!-- Digital Signature Box -->
@@ -760,7 +785,7 @@
               <!-- Name for verification -->
               <div class="rbi-input-group">
                 <label for="ekyc-name-input" class="rbi-input-label" style="display: flex; align-items: center; gap: 6px;">
-                  <span style="font-size: 0.85rem;">👤</span> Full Name (as on documents)
+                  <span style="font-size: 0.85rem;">👤</span> Full Name (as on documents) <span style="color: #e74c3c; font-size: 0.7rem;">*</span>
                 </label>
                 <input type="text" id="ekyc-name-input" class="rbi-input-field-text" placeholder="e.g. Ramesh Kumar" autocomplete="off">
               </div>

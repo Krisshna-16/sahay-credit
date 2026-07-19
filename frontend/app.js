@@ -510,6 +510,8 @@ let state = {
   consents: { upi: true, bills: true, ecom: true, location: true, gst: true },
   signatureName: '',
   borrowerName: '',
+  monthlyIncome: null,
+  requestedLoanAmount: null,
   
   // Simulator Parameters
   simState: {
@@ -839,19 +841,42 @@ function bindEvents() {
     updateAdditionalFootprints();
   }
 
-  // Consent Screen - Digital Signature input listener
-  dom.signatureInput.addEventListener('input', (e) => {
-    state.signatureName = e.target.value.trim();
-    // Enable proceed button only if user has typed a name (at least 2 letters)
-    if (state.signatureName.length > 1) {
-      dom.consentProceedBtn.disabled = false;
+  // Consent Screen - Input Listeners for Digital Signature, Monthly Income & Loan Amount
+  const consentIncomeInput = document.getElementById('consent-income-input');
+  const consentLoanInput = document.getElementById('consent-loan-input');
+
+  function validateConsentInputs() {
+    state.signatureName = dom.signatureInput.value.trim();
+    const incomeVal = parseFloat((consentIncomeInput?.value || '').trim());
+    const loanVal = parseFloat((consentLoanInput?.value || '').trim());
+
+    const signatureValid = state.signatureName.length > 1;
+    const incomeValid = !isNaN(incomeVal) && incomeVal > 0;
+
+    if (incomeValid) {
+      state.monthlyIncome = incomeVal;
     } else {
-      dom.consentProceedBtn.disabled = true;
+      state.monthlyIncome = null;
     }
-  });
+
+    if (!isNaN(loanVal) && loanVal > 0) {
+      state.requestedLoanAmount = loanVal;
+    } else {
+      state.requestedLoanAmount = null;
+    }
+
+    if (dom.consentProceedBtn) {
+      dom.consentProceedBtn.disabled = !(signatureValid && incomeValid);
+    }
+  }
+
+  dom.signatureInput.addEventListener('input', validateConsentInputs);
+  if (consentIncomeInput) consentIncomeInput.addEventListener('input', validateConsentInputs);
+  if (consentLoanInput) consentLoanInput.addEventListener('input', validateConsentInputs);
 
   // Consent Screen -> Accept & Proceed
   dom.consentProceedBtn.addEventListener('click', () => {
+    validateConsentInputs();
     navigateTo('rbiLink');
   });
 
@@ -1082,9 +1107,11 @@ function bindEvents() {
     const aadhaar = (ekycAadhaarInput?.value || '').replace(/\s/g, '');
     const pan = (ekycPanInput?.value || '').trim().toUpperCase();
     const name = (ekycNameInput?.value || '').trim();
+
     const aadhaarValid = /^\d{12}$/.test(aadhaar);
     const panValid = /^[A-Z]{5}\d{4}[A-Z]$/.test(pan);
     const nameValid = name.length >= 2;
+
     ekycVerifyBtn.disabled = !(aadhaarValid && panValid && nameValid && photoCaptured);
   }
 
@@ -1643,6 +1670,8 @@ async function submitAnswersToAPI() {
       borrowerId,
       // Send the real borrower name so the lender dashboard shows it correctly
       borrowerName: state.borrowerName || state.signatureName || null,
+      monthlyIncome: state.monthlyIncome || null,
+      requestedLoanAmount: state.requestedLoanAmount || null,
       deviceFingerprint: state.deviceFingerprint
     };
 
@@ -2000,6 +2029,8 @@ function startProcessingAnimation() {
                 borrowerId: state.borrowerId,
                 score: state.scoreData.score,
                 borrowerName: state.borrowerName || state.signatureName || null,
+                monthlyIncome: state.monthlyIncome || null,
+                requestedLoanAmount: state.requestedLoanAmount || null,
                 isMSME: false
               })
             }).catch(() => { /* non-fatal — lender dashboard will show borrower on next server load */ });
@@ -2578,8 +2609,17 @@ function resetAssessment() {
   state.currentQuestionIndex = 0;
   state.scoreData = null;
   state.signatureName = '';
+  state.borrowerName = '';
+  state.monthlyIncome = null;
+  state.requestedLoanAmount = null;
   state.consents = { upi: true, bills: true, ecom: true, location: true, gst: true };
   
+  // Reset Consent Screen Income / Loan input fields
+  const consentIncomeInput = document.getElementById('consent-income-input');
+  const consentLoanInput = document.getElementById('consent-loan-input');
+  if (consentIncomeInput) consentIncomeInput.value = '';
+  if (consentLoanInput) consentLoanInput.value = '';
+
   // Reset Consent Screen DOM elements
   dom.signatureInput.value = '';
   dom.consentToggles.upi.checked = true;

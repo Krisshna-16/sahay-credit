@@ -668,9 +668,10 @@ function calculateStats() {
   dom.statApproved.textContent = `${approvalRate}%`;
 
   // Average Loan Size Requested
-  const totalLoan = apps.reduce((acc, a) => acc + a.loanAmount, 0);
-  const avgLoan = Math.round(totalLoan / apps.length);
-  dom.statAvgLoan.textContent = `₹${avgLoan.toLocaleString('en-IN')}`;
+  const requestedApps = apps.filter(a => a.loanAmount && a.loanAmount > 0);
+  const totalLoan = requestedApps.reduce((acc, a) => acc + a.loanAmount, 0);
+  const avgLoan = requestedApps.length > 0 ? Math.round(totalLoan / requestedApps.length) : 0;
+  dom.statAvgLoan.textContent = avgLoan > 0 ? `₹${avgLoan.toLocaleString('en-IN')}` : '—';
 
   // Security alerts count
   const alertApps = apps.filter(app => {
@@ -800,11 +801,15 @@ function renderTable() {
       }
     }
 
+    const loanRequestedCell = (app.loanAmount && app.loanAmount > 0)
+      ? `₹${Number(app.loanAmount).toLocaleString('en-IN')}`
+      : `<span style="color: var(--text-muted); font-size: 0.78rem; font-style: italic;">Not yet requested</span>`;
+
     tr.innerHTML = `
       <td style="font-weight: 600;">${nameCellContent}</td>
       <td style="font-weight: 700;">${app.score}${mlScoreBadge}</td>
       <td style="color: ${confidenceColor}; font-weight: 700;">${app.confidence}%</td>
-      <td>₹${app.loanAmount.toLocaleString('en-IN')}</td>
+      <td>${loanRequestedCell}</td>
       <td style="color: var(--secondary); font-weight: 600;">${app.suggestedRate}% p.a.</td>
       <td>${app.signalsCount} / 11</td>
       <td><span class="fraud-badge ${fraudBadgeClass}">${fraudLabel}</span></td>

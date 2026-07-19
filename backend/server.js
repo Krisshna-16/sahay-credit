@@ -335,8 +335,11 @@ function callMlScoringService(appRecord) {
     // Map signal ratings to approximate Home Credit feature ranges
     const ageYears = 30 + (psychScore / 100) * 20;          // 30–50
     const daysEmployed = salaryRating >= 67 ? -1825 : 365243; // employed or not
-    const income = appRecord.loanAmount * 2.5;
-    const annuity = appRecord.loanAmount * (appRecord.suggestedRate / 100 / 12);
+    const targetCredit = appRecord.loanAmount || 35000;
+    const income = (appRecord.monthlyIncome && appRecord.monthlyIncome > 0)
+      ? appRecord.monthlyIncome
+      : targetCredit * 2.5;
+    const annuity = targetCredit * ((appRecord.suggestedRate || 18) / 100 / 12);
     const extSource = (appRecord.score - 300) / 600;         // normalize 300-900 → 0-1
 
     const payload = JSON.stringify({
@@ -344,8 +347,8 @@ function callMlScoringService(appRecord) {
       DAYS_EMPLOYED: daysEmployed,
       AMT_INCOME_TOTAL: income,
       AMT_ANNUITY: annuity,
-      AMT_CREDIT: appRecord.loanAmount,
-      AMT_GOODS_PRICE: appRecord.loanAmount * 0.95,
+      AMT_CREDIT: targetCredit,
+      AMT_GOODS_PRICE: targetCredit * 0.95,
       EXT_SOURCE_1: extSource,
       EXT_SOURCE_2: Math.min(1, extSource + 0.05),
       EXT_SOURCE_3: Math.max(0, extSource - 0.05),
@@ -616,7 +619,7 @@ app.get('/api/consent-audit', (req, res) => {
 // is used instead. Saves the borrower so they still appear on the lender dashboard.
 app.post('/api/applicant/register', (req, res) => {
   try {
-    const { borrowerId, score, isMSME, borrowerName } = req.body;
+    const { borrowerId, score, isMSME, borrowerName, monthlyIncome, requestedLoanAmount } = req.body;
     if (!borrowerId || typeof score !== 'number') {
       return res.status(400).json({ success: false, error: 'borrowerId and score are required' });
     }
@@ -636,7 +639,8 @@ app.post('/api/applicant/register', (req, res) => {
       submittedAt: new Date().toISOString(),
       score: score,
       confidenceBand: 15,
-      loanAmount: isMSME ? 150000 : 35000,
+      monthlyIncome: monthlyIncome ? Number(monthlyIncome) : null,
+      loanAmount: requestedLoanAmount ? Number(requestedLoanAmount) : null,
       suggestedRate: 18,
       signalsCount: 6,
       status: 'Review',
@@ -815,8 +819,12 @@ app.post('/api/score', async (req, res) => {
       loanRecommendation: loanRecommendation || undefined
     };
 
-    if (borrowerId) {
-      const ekycStatus = getEkycStatus(borrowerId);
+    const borrowerIdVal = req.body.borrowerId || null;
+    const monthlyIncome = req.body.monthlyIncome ? Number(req.body.monthlyIncome) : null;
+    const requestedLoanAmount = req.body.requestedLoanAmount ? Number(req.body.requestedLoanAmount) : null;
+
+    if (borrowerIdVal) {
+      const ekycStatus = getEkycStatus(borrowerIdVal);
       // Use the name the borrower typed during the flow (sent in request body).
       // The sandbox eKYC provider never returns a real name, so we always prefer
       // the explicit borrowerName field. Fall back to eKYC extracted name only
@@ -828,19 +836,20 @@ app.post('/api/score', async (req, res) => {
         ? req.body.borrowerName.trim()
         : (ekycExtractedName || 'Borrower Profile');
 
-      const rawAadhaar = getAadhaarByBorrower(borrowerId);
+      const rawAadhaar = getAadhaarByBorrower(borrowerIdVal);
       const deviceFingerprint = req.body.deviceFingerprint || req.headers['x-device-fingerprint'] || Buffer.from(req.headers['user-agent'] || '').toString('base64').slice(0, 32);
       if (rawAadhaar) {
         registerAadhaarDevice(rawAadhaar, deviceFingerprint);
       }
 
       const newApplication = {
-        id: borrowerId,
+        id: borrowerIdVal,
         name: borrowerName,
         submittedAt: new Date().toISOString(),
         score: extendedResult.score,
         confidenceBand: extendedResult.confidenceBand || 15,
-        loanAmount: isMSME ? 150000 : 35000,
+        monthlyIncome: monthlyIncome,
+        loanAmount: requestedLoanAmount || null,
         suggestedRate: extendedResult.interestRate || 18,
         signalsCount: 8,
         status: "Review",
@@ -893,7 +902,8 @@ app.post('/api/score', async (req, res) => {
     // ── Call Python ML scoring service for this real borrower ──────────────
     const mlResult = await callMlScoringService({
       score: extendedResult.score,
-      loanAmount: isMSME ? 150000 : 35000,
+      monthlyIncome: monthlyIncome,
+      loanAmount: requestedLoanAmount || 35000,
       suggestedRate: extendedResult.interestRate || 18,
       signals: {
         psychometric: { rating: Math.round(extendedResult.dimensions?.financialDiscipline || 70) },
