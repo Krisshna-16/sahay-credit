@@ -1741,6 +1741,429 @@ function copyText(text, btnId, spanId) {
   }).catch(() => {});
 }
 
+/* ================================================================
+   LIVE PLATFORM ANALYTICS DASHBOARD ENGINE
+   ================================================================ */
+
+let analyticsPaused = false;
+let analyticsInterval = null;
+
+function initAnalytics() {
+  renderAnalyticsCharts();
+
+  // Bind Pause/Resume Live Updates button
+  const pauseBtn = document.getElementById('an-pause-btn');
+  if (pauseBtn && !pauseBtn.dataset.bound) {
+    pauseBtn.dataset.bound = 'true';
+    pauseBtn.addEventListener('click', () => {
+      analyticsPaused = !analyticsPaused;
+      const icon = document.getElementById('an-pause-icon');
+      const text = document.getElementById('an-pause-text');
+      const dot = document.getElementById('an-live-dot');
+
+      if (analyticsPaused) {
+        if (icon) icon.textContent = '▶';
+        if (text) text.textContent = 'Resume Live Updates';
+        if (dot) dot.style.opacity = '0.3';
+        if (analyticsInterval) clearInterval(analyticsInterval);
+      } else {
+        if (icon) icon.textContent = '⏸';
+        if (text) text.textContent = 'Pause Live Updates';
+        if (dot) dot.style.opacity = '1';
+        renderAnalyticsCharts();
+        startAnalyticsAutoRefresh();
+      }
+    });
+  }
+
+  startAnalyticsAutoRefresh();
+}
+
+function startAnalyticsAutoRefresh() {
+  if (analyticsInterval) clearInterval(analyticsInterval);
+  analyticsInterval = setInterval(() => {
+    if (!analyticsPaused && state.currentTab === 'analytics-workspace') {
+      renderAnalyticsCharts();
+    }
+  }, 5000);
+}
+
+function renderAnalyticsCharts() {
+  renderScoreDistributionChart();
+  renderSignalContributionsRadar();
+  renderApprovalRateLineChart();
+  renderLatencyGaugeChart();
+}
+
+// 1. Score Distribution Bar Chart (Canvas: #ch-score)
+function renderScoreDistributionChart() {
+  const canvas = document.getElementById('ch-score');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Calculate applicant buckets from active applications pool
+  const apps = state.applications || [];
+  const buckets = [
+    { label: '300-500', count: 0, color: '#FF4D4D' },
+    { label: '500-600', count: 0, color: '#F4A261' },
+    { label: '600-700', count: 0, color: '#E9C46A' },
+    { label: '700-800', count: 0, color: '#02C39A' },
+    { label: '800-900', count: 0, color: '#00A896' }
+  ];
+
+  if (apps.length > 0) {
+    apps.forEach(app => {
+      const s = app.score || 600;
+      if (s < 500) buckets[0].count++;
+      else if (s < 600) buckets[1].count++;
+      else if (s < 700) buckets[2].count++;
+      else if (s < 800) buckets[3].count++;
+      else buckets[4].count++;
+    });
+  } else {
+    // Demo baseline fallback distribution
+    buckets[0].count = 2;
+    buckets[1].count = 5;
+    buckets[2].count = 14;
+    buckets[3].count = 18;
+    buckets[4].count = 6;
+  }
+
+  const total = apps.length || 45;
+  const totalEl = document.getElementById('ch1-total');
+  if (totalEl) totalEl.textContent = `Total: ${total}`;
+
+  const maxCount = Math.max(...buckets.map(b => b.count), 1);
+  const paddingLeft = 40;
+  const paddingBottom = 35;
+  const paddingTop = 20;
+  const chartW = w - paddingLeft - 20;
+  const chartH = h - paddingTop - paddingBottom;
+
+  // Gridlines
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+  ctx.lineWidth = 1;
+  ctx.fillStyle = '#8892b0';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'right';
+
+  const gridSteps = 4;
+  for (let i = 0; i <= gridSteps; i++) {
+    const yVal = Math.round((maxCount / gridSteps) * i);
+    const y = h - paddingBottom - (i / gridSteps) * chartH;
+    ctx.beginPath();
+    ctx.moveTo(paddingLeft, y);
+    ctx.lineTo(w - 20, y);
+    ctx.stroke();
+    ctx.fillText(yVal, paddingLeft - 8, y + 3);
+  }
+
+  // Bars
+  const barWidth = (chartW / buckets.length) * 0.55;
+  const step = chartW / buckets.length;
+
+  buckets.forEach((b, idx) => {
+    const barH = (b.count / maxCount) * chartH;
+    const x = paddingLeft + idx * step + (step - barWidth) / 2;
+    const y = h - paddingBottom - barH;
+
+    // Bar gradient
+    const grad = ctx.createLinearGradient(0, y, 0, h - paddingBottom);
+    grad.addColorStop(0, b.color);
+    grad.addColorStop(1, b.color + '33');
+
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x, y, barWidth, barH, [4, 4, 0, 0]);
+    else ctx.rect(x, y, barWidth, barH);
+    ctx.fill();
+
+    // Value on top of bar
+    ctx.fillStyle = '#e6f1ff';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(b.count, x + barWidth / 2, y - 5);
+
+    // Bucket label
+    ctx.fillStyle = '#8892b0';
+    ctx.font = '10px sans-serif';
+    ctx.fillText(b.label, x + barWidth / 2, h - 12);
+  });
+}
+
+// 2. Signal Contributions Radar Chart (Canvas: #ch-radar)
+function renderSignalContributionsRadar() {
+  const canvas = document.getElementById('ch-radar');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+
+  ctx.clearRect(0, 0, w, h);
+
+  const cx = w / 2;
+  const cy = h / 2 + 5;
+  const radius = 75;
+
+  const signals = [
+    { label: 'UPI / Bank', key: 'upi', def: 82 },
+    { label: 'Mobile Bills', key: 'mobile', def: 75 },
+    { label: 'E-Commerce', key: 'ecommerce', def: 65 },
+    { label: 'Geo Stability', key: 'geo', def: 88 },
+    { label: 'GST / Merchant', key: 'merchantRatings', def: 60 },
+    { label: 'Psychometric', key: 'psychometric', def: 72 }
+  ];
+
+  // Compute average rating for each signal from active applications
+  const apps = state.applications || [];
+  signals.forEach(sig => {
+    if (apps.length > 0) {
+      let sum = 0, cnt = 0;
+      apps.forEach(app => {
+        if (app.signals && app.signals[sig.key]) {
+          sum += app.signals[sig.key].rating || 0;
+          cnt++;
+        }
+      });
+      sig.value = cnt > 0 ? sum / cnt : sig.def;
+    } else {
+      sig.value = sig.def;
+    }
+  });
+
+  const numSides = signals.length;
+
+  // Draw concentric polygon grid
+  const levels = 4;
+  for (let l = 1; l <= levels; l++) {
+    const r = (radius / levels) * l;
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < numSides; i++) {
+      const angle = (Math.PI * 2 / numSides) * i - Math.PI / 2;
+      const x = cx + r * Math.cos(angle);
+      const y = cy + r * Math.sin(angle);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+  }
+
+  // Draw axis spokes and labels
+  signals.forEach((sig, i) => {
+    const angle = (Math.PI * 2 / numSides) * i - Math.PI / 2;
+    const x = cx + radius * Math.cos(angle);
+    const y = cy + radius * Math.sin(angle);
+
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+
+    // Axis label
+    const lx = cx + (radius + 22) * Math.cos(angle);
+    const ly = cy + (radius + 16) * Math.sin(angle);
+    ctx.fillStyle = '#8892b0';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = lx > cx ? 'left' : lx < cx ? 'right' : 'center';
+    ctx.fillText(`${sig.label} (${Math.round(sig.value)}%)`, lx, ly);
+  });
+
+  // Draw data polygon
+  ctx.beginPath();
+  signals.forEach((sig, i) => {
+    const r = (sig.value / 100) * radius;
+    const angle = (Math.PI * 2 / numSides) * i - Math.PI / 2;
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.closePath();
+
+  ctx.fillStyle = 'rgba(2, 195, 154, 0.25)';
+  ctx.fill();
+  ctx.strokeStyle = '#02C39A';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Draw vertex dots
+  signals.forEach((sig, i) => {
+    const r = (sig.value / 100) * radius;
+    const angle = (Math.PI * 2 / numSides) * i - Math.PI / 2;
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle);
+
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#02C39A';
+    ctx.fill();
+    ctx.strokeStyle = '#0a192f';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  });
+}
+
+// 3. Approval Rate Line Chart (Canvas: #ch-approval)
+function renderApprovalRateLineChart() {
+  const canvas = document.getElementById('ch-approval');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+
+  ctx.clearRect(0, 0, w, h);
+
+  const paddingLeft = 45;
+  const paddingBottom = 30;
+  const paddingTop = 20;
+  const chartW = w - paddingLeft - 20;
+  const chartH = h - paddingTop - paddingBottom;
+
+  // Gridlines
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+  ctx.lineWidth = 1;
+  ctx.fillStyle = '#8892b0';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'right';
+
+  for (let i = 0; i <= 4; i++) {
+    const pct = i * 25;
+    const y = h - paddingBottom - (i / 4) * chartH;
+    ctx.beginPath();
+    ctx.moveTo(paddingLeft, y);
+    ctx.lineTo(w - 20, y);
+    ctx.stroke();
+    ctx.fillText(`${pct}%`, paddingLeft - 8, y + 3);
+  }
+
+  // Simulated 30-day timeline trend
+  const days = 30;
+  const sahayData = [65, 66, 68, 67, 70, 72, 71, 73, 75, 74, 76, 75, 77, 78, 76, 77, 79, 78, 80, 81, 79, 82, 81, 83, 82, 84, 83, 85, 84, 86];
+  const indData   = [24, 25, 24, 23, 26, 25, 27, 26, 28, 27, 26, 28, 29, 28, 27, 29, 30, 29, 28, 30, 31, 30, 29, 31, 30, 32, 31, 30, 31, 32];
+
+  // X-axis days
+  ctx.textAlign = 'center';
+  for (let d = 0; d < days; d += 5) {
+    const x = paddingLeft + (d / (days - 1)) * chartW;
+    ctx.fillText(`Day ${d + 1}`, x, h - 10);
+  }
+
+  // Helper to draw line
+  function drawLine(data, color, isFilled) {
+    ctx.beginPath();
+    data.forEach((val, idx) => {
+      const x = paddingLeft + (idx / (days - 1)) * chartW;
+      const y = h - paddingBottom - (val / 100) * chartH;
+      if (idx === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+
+    if (isFilled) {
+      const fillPath = new Path2D();
+      data.forEach((val, idx) => {
+        const x = paddingLeft + (idx / (days - 1)) * chartW;
+        const y = h - paddingBottom - (val / 100) * chartH;
+        if (idx === 0) fillPath.moveTo(x, y);
+        else fillPath.lineTo(x, y);
+      });
+      fillPath.lineTo(paddingLeft + chartW, h - paddingBottom);
+      fillPath.lineTo(paddingLeft, h - paddingBottom);
+      fillPath.closePath();
+
+      const grad = ctx.createLinearGradient(0, paddingTop, 0, h - paddingBottom);
+      grad.addColorStop(0, color + '33');
+      grad.addColorStop(1, color + '00');
+      ctx.fillStyle = grad;
+      ctx.fill(fillPath);
+    }
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+  }
+
+  drawLine(indData, '#FF4D4D', false);
+  drawLine(sahayData, '#02C39A', true);
+}
+
+// 4. Time to Score Speedometer Gauge (Canvas: #ch-gauge)
+function renderLatencyGaugeChart() {
+  const canvas = document.getElementById('ch-gauge');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+
+  ctx.clearRect(0, 0, w, h);
+
+  const cx = w / 2;
+  const cy = h - 20;
+  const r = 85;
+
+  // Track arc (background)
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, Math.PI, 2 * Math.PI);
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+  ctx.lineWidth = 14;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // Active latency value: 2.3 seconds (range 0 to 5s)
+  const currentLatency = 2.3;
+  const maxLatency = 5.0;
+  const pct = Math.min(1.0, currentLatency / maxLatency);
+  const endAngle = Math.PI + pct * Math.PI;
+
+  // Active arc gradient
+  const grad = ctx.createLinearGradient(cx - r, cy, cx + r, cy);
+  grad.addColorStop(0, '#02C39A');
+  grad.addColorStop(0.7, '#64b4ff');
+  grad.addColorStop(1.0, '#FF4D4D');
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, Math.PI, endAngle);
+  ctx.strokeStyle = grad;
+  ctx.lineWidth = 14;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // Needle
+  const needleAngle = Math.PI + pct * Math.PI;
+  const nx = cx + (r - 18) * Math.cos(needleAngle);
+  const ny = cy + (r - 18) * Math.sin(needleAngle);
+
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(nx, ny);
+  ctx.strokeStyle = '#e6f1ff';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // Needle hub dot
+  ctx.beginPath();
+  ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+  ctx.fillStyle = '#02C39A';
+  ctx.fill();
+
+  // Update DOM readouts
+  const gVal = document.getElementById('gauge-val');
+  if (gVal) gVal.textContent = `${currentLatency.toFixed(1)}s`;
+  const gP50 = document.getElementById('gauge-p50');
+  if (gP50) gP50.textContent = '1.8s';
+  const gP95 = document.getElementById('gauge-p95');
+  if (gP95) gP95.textContent = '2.6s';
+  const gSla = document.getElementById('gauge-sla');
+  if (gSla) gSla.textContent = '100%';
+}
+
 // Model Performance Plotting Algorithms
 function renderModelPerformanceCharts() {
   const ksSvg = document.getElementById('ks-chart-svg');
