@@ -774,6 +774,30 @@ function renderTable() {
         padding: 1px 5px; cursor: pointer; font-weight: 700; vertical-align: middle;
         margin-left: 4px; transition: all 0.2s ease;
       ">Why?</button>`;
+
+      // Affordability mini-row (inline, same cell as score)
+      const aff = app.mlAffordability;
+      if (aff && aff.emi_capacity > 0) {
+        const fmt = (n) => '₹' + Math.round(n).toLocaleString('en-IN');
+        const rateBand = (aff.interest_rate_band || '').replace('–', '–');
+        mlScoreBadge += `
+        <div style="margin-top:5px; display:flex; flex-wrap:wrap; gap:4px;">
+          <span style="font-size:0.6rem; padding:1px 6px; border-radius:3px;
+            background:rgba(2,195,154,0.07); border:1px solid rgba(2,195,154,0.2); color:#02C39A;">
+            🏦 Safe Loan: ${fmt(aff.safe_loan_amount)}
+          </span>
+          <span style="font-size:0.6rem; padding:1px 6px; border-radius:3px;
+            background:rgba(100,180,255,0.07); border:1px solid rgba(100,180,255,0.2); color:#64b4ff;">
+            📅 EMI: ${fmt(aff.recommended_emi)}/mo · ${aff.recommended_tenure_months}m
+          </span>
+          <span style="font-size:0.6rem; padding:1px 6px; border-radius:3px;
+            background:rgba(255,200,80,0.07); border:1px solid rgba(255,200,80,0.2); color:#ffc850;">
+            📈 ${rateBand}
+          </span>
+        </div>`;
+      } else if (aff !== null && aff !== undefined) {
+        mlScoreBadge += `<div style="margin-top:4px; font-size:0.58rem; color:var(--text-muted);">Affordability details unavailable</div>`;
+      }
     }
 
     tr.innerHTML = `

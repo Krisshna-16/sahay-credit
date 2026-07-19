@@ -2242,6 +2242,44 @@ function renderCalculatedResults() {
       mlCard.style.display = 'none';
     }
   }
+
+  // ── Render Affordability Card (from Python Affordability Engine) ──────────
+  const affCard = document.getElementById('affordability-summary-card');
+  if (affCard) {
+    const aff = data.mlAffordability;
+    const isHiAff = lang === 'hi';
+    if (aff && aff.emi_capacity > 0) {
+      affCard.style.display = 'block';
+      const fmt = (n) => '₹' + Math.round(n).toLocaleString('en-IN');
+      const rateBand = (aff.interest_rate_band || '').replace('p.a.', isHiAff ? 'प्रति वर्ष' : 'p.a.');
+
+      const sentenceEl = document.getElementById('affordability-sentence');
+      if (sentenceEl) {
+        sentenceEl.textContent = isHiAff
+          ? `आप ${fmt(aff.safe_loan_amount)} तक के ऋण के लिए पात्र हो सकते हैं, ${rateBand} पर, ₹${Math.round(aff.recommended_emi).toLocaleString('en-IN')}/माह की EMI के साथ ${aff.recommended_tenure_months} महीने के लिए।`
+          : `You may be eligible for up to ${fmt(aff.safe_loan_amount)} at ${rateBand}, with an EMI of ${fmt(aff.recommended_emi)}/month over ${aff.recommended_tenure_months} months.`;
+      }
+
+      const loanEl  = document.getElementById('aff-loan-amount');
+      const emiEl   = document.getElementById('aff-emi');
+      const rateEl  = document.getElementById('aff-rate-band');
+      if (loanEl) loanEl.textContent = fmt(aff.safe_loan_amount);
+      if (emiEl)  emiEl.textContent  = fmt(aff.recommended_emi) + '/mo';
+      if (rateEl) rateEl.textContent = aff.interest_rate_band || '—';
+
+      const unavailEl = document.getElementById('affordability-unavailable');
+      if (unavailEl) unavailEl.style.display = 'none';
+    } else {
+      // Show graceful fallback
+      affCard.style.display = 'block';
+      const sentenceEl = document.getElementById('affordability-sentence');
+      if (sentenceEl) sentenceEl.style.display = 'none';
+      const tilesEl = document.getElementById('affordability-tiles');
+      if (tilesEl) tilesEl.style.display = 'none';
+      const unavailEl = document.getElementById('affordability-unavailable');
+      if (unavailEl) unavailEl.style.display = 'block';
+    }
+  }
 }
 
 // Reset Assessment

@@ -805,6 +805,34 @@
             </div>
           </div>
 
+          <!-- Affordability Summary Card (from Python Affordability Engine) -->
+          <div id="affordability-summary-card" style="display:none; margin-top:14px; padding:16px; border-radius:12px; border:1px solid rgba(2,195,154,0.2); background:rgba(2,195,154,0.03); transition:all 0.3s ease;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+              <span style="font-size:1.1rem;">🏦</span>
+              <h4 style="font-size:0.82rem; font-weight:700; margin:0; color:var(--text-main);">Affordability Assessment</h4>
+              <span style="font-size:0.6rem; font-weight:700; padding:2px 7px; border-radius:10px; background:rgba(2,195,154,0.12); color:#02C39A; margin-left:auto;">RBI FOIR Methodology</span>
+            </div>
+            <!-- Sentence summary -->
+            <p id="affordability-sentence" style="font-size:0.78rem; color:var(--text-sub); line-height:1.55; margin:0 0 12px 0; padding:10px 12px; background:rgba(255,255,255,0.02); border-radius:8px; border-left:3px solid rgba(2,195,154,0.4);"></p>
+            <!-- Three quick tiles -->
+            <div id="affordability-tiles" style="display:flex; gap:8px; flex-wrap:wrap;">
+              <div style="flex:1; min-width:90px; background:rgba(255,255,255,0.02); border-radius:8px; border:1px solid rgba(2,195,154,0.15); padding:10px 12px; text-align:center;">
+                <div style="font-size:0.6rem; color:var(--text-muted); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.05em;">Safe Loan</div>
+                <div id="aff-loan-amount" style="font-size:1rem; font-weight:800; color:#02C39A;">—</div>
+              </div>
+              <div style="flex:1; min-width:90px; background:rgba(255,255,255,0.02); border-radius:8px; border:1px solid rgba(100,180,255,0.15); padding:10px 12px; text-align:center;">
+                <div style="font-size:0.6rem; color:var(--text-muted); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.05em;">Monthly EMI</div>
+                <div id="aff-emi" style="font-size:1rem; font-weight:800; color:#64b4ff;">—</div>
+              </div>
+              <div style="flex:1; min-width:90px; background:rgba(255,255,255,0.02); border-radius:8px; border:1px solid rgba(255,200,80,0.15); padding:10px 12px; text-align:center;">
+                <div style="font-size:0.6rem; color:var(--text-muted); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.05em;">Interest Rate</div>
+                <div id="aff-rate-band" style="font-size:0.82rem; font-weight:800; color:#ffc850;">—</div>
+              </div>
+            </div>
+            <!-- Graceful fallback -->
+            <p id="affordability-unavailable" style="display:none; font-size:0.75rem; color:var(--text-muted); text-align:center; margin:6px 0 0 0;">Affordability details unavailable</p>
+          </div>
+
           <!-- Credit Limit & Recommended Interest Rate Grid -->
           <div class="results-financial-grid" style="margin-top: 20px;">
             <!-- Credit Limit Box -->

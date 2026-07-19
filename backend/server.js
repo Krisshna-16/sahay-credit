@@ -380,10 +380,11 @@ function callMlScoringService(appRecord) {
         try {
           const parsed = JSON.parse(data);
           resolve({
-            mlCreditScore: parsed.credit_score,
-            mlRiskLevel: parsed.risk_level,
-            mlDefaultProb: parsed.predicted_default_prob,
-            mlReasonCodes: parsed.reason_codes
+            mlCreditScore:   parsed.credit_score,
+            mlRiskLevel:     parsed.risk_level,
+            mlDefaultProb:   parsed.predicted_default_prob,
+            mlReasonCodes:   parsed.reason_codes,
+            mlAffordability: parsed.affordability || null
           });
         } catch { resolve(null); }
       });
@@ -471,10 +472,11 @@ app.get('/api/applications', async (req, res) => {
       compositeWeights,
       sourceCount,
       // ── Real ML score from Python fraud_credit_service ──
-      mlCreditScore: mlResults[idx] ? mlResults[idx].mlCreditScore : (appRecord.mlCreditScore || null),
-      mlRiskLevel:   mlResults[idx] ? mlResults[idx].mlRiskLevel   : (appRecord.mlRiskLevel || null),
-      mlDefaultProb: mlResults[idx] ? mlResults[idx].mlDefaultProb : (appRecord.mlDefaultProb || null),
-      mlReasonCodes: mlResults[idx] ? mlResults[idx].mlReasonCodes : (appRecord.mlReasonCodes || null)
+      mlCreditScore:   mlResults[idx] ? mlResults[idx].mlCreditScore   : (appRecord.mlCreditScore || null),
+      mlRiskLevel:     mlResults[idx] ? mlResults[idx].mlRiskLevel     : (appRecord.mlRiskLevel || null),
+      mlDefaultProb:   mlResults[idx] ? mlResults[idx].mlDefaultProb   : (appRecord.mlDefaultProb || null),
+      mlReasonCodes:   mlResults[idx] ? mlResults[idx].mlReasonCodes   : (appRecord.mlReasonCodes || null),
+      mlAffordability: mlResults[idx] ? mlResults[idx].mlAffordability : (appRecord.mlAffordability || null)
     };
   });
   res.json({
@@ -863,20 +865,22 @@ app.post('/api/score', async (req, res) => {
 
     // Attach ML result to both the response and the stored application record
     if (mlResult) {
-      extendedResult.mlCreditScore = mlResult.mlCreditScore;
-      extendedResult.mlRiskLevel   = mlResult.mlRiskLevel;
-      extendedResult.mlDefaultProb = mlResult.mlDefaultProb;
-      extendedResult.mlReasonCodes = mlResult.mlReasonCodes;
+      extendedResult.mlCreditScore   = mlResult.mlCreditScore;
+      extendedResult.mlRiskLevel     = mlResult.mlRiskLevel;
+      extendedResult.mlDefaultProb   = mlResult.mlDefaultProb;
+      extendedResult.mlReasonCodes   = mlResult.mlReasonCodes;
+      extendedResult.mlAffordability = mlResult.mlAffordability;
     }
 
     // Update the stored application with ML fields too (for lender dashboard)
     if (borrowerId) {
       const idx = applications.findIndex(a => a.id === borrowerId);
       if (idx >= 0 && mlResult) {
-        applications[idx].mlCreditScore = mlResult.mlCreditScore;
-        applications[idx].mlRiskLevel   = mlResult.mlRiskLevel;
-        applications[idx].mlDefaultProb = mlResult.mlDefaultProb;
-        applications[idx].mlReasonCodes = mlResult.mlReasonCodes;
+        applications[idx].mlCreditScore   = mlResult.mlCreditScore;
+        applications[idx].mlRiskLevel     = mlResult.mlRiskLevel;
+        applications[idx].mlDefaultProb   = mlResult.mlDefaultProb;
+        applications[idx].mlReasonCodes   = mlResult.mlReasonCodes;
+        applications[idx].mlAffordability = mlResult.mlAffordability;
 
         // Save to persistence store with ML scoring results
         saveApplication(applications[idx]);
