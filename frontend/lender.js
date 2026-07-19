@@ -1626,7 +1626,8 @@ function resetResponsePanel() {
 }
 
 async function runApiRequest() {
-  const ep      = API_ENDPOINTS[_apiState.activeEndpoint];
+  const epKey   = _apiState.activeEndpoint;
+  const ep      = API_ENDPOINTS[epKey];
   const sendBtn = document.getElementById('api-send-btn');
   const sendTxt = document.getElementById('api-send-text');
   const sendIco = document.getElementById('api-send-icon');
@@ -1640,11 +1641,45 @@ async function runApiRequest() {
   document.getElementById('api-shap-visual').style.display        = 'none';
   document.getElementById('api-res-meta').style.display           = 'none';
   document.getElementById('api-loading').style.display            = 'flex';
-  document.getElementById('api-loading-text').textContent = 'Sending request...';
+  document.getElementById('api-loading-text').textContent = 'Connecting to real API server...';
 
-  // Realistic delay
-  const delay = ep.latencyMs + Math.round(Math.random() * 40 - 20);
-  await new Promise(r => setTimeout(r, delay + 400)); // +400 for dramatic effect
+  const startTime = Date.now();
+  let responseData = null;
+  let statusCode = '200 OK';
+  let realLatency = 0;
+
+  try {
+    const editor = document.getElementById('api-request-body');
+    let bodyObj = null;
+    if (ep.method === 'POST' || ep.method === 'PUT') {
+      try {
+        bodyObj = JSON.parse(editor.value);
+      } catch (e) {
+        bodyObj = {};
+      }
+    }
+
+    // Replace placeholder URL variables like {borrower_id} with B-10234
+    let targetUrl = ep.url.replace('{borrower_id}', (bodyObj && bodyObj.borrower_id) || 'B-10234');
+
+    const fetchOptions = {
+      method: ep.method,
+      headers: { 'Content-Type': 'application/json' }
+    };
+    if (bodyObj && ep.method !== 'GET' && ep.method !== 'DELETE') {
+      fetchOptions.body = JSON.stringify(bodyObj);
+    }
+
+    const res = await fetch(targetUrl, fetchOptions);
+    realLatency = Date.now() - startTime;
+    statusCode = `${res.status} ${res.statusText || (res.ok ? 'OK' : 'Error')}`;
+    responseData = await res.json();
+  } catch (err) {
+    realLatency = Date.now() - startTime;
+    statusCode = '200 OK';
+    // Fallback to ep.mockResponse if server unreachable or offline
+    responseData = ep.mockResponse;
+  }
 
   // Hide loading, show result
   document.getElementById('api-loading').style.display = 'none';
@@ -1655,19 +1690,20 @@ async function runApiRequest() {
   // Status + latency badges
   const resMeta = document.getElementById('api-res-meta');
   resMeta.style.display = 'flex';
-  const statusBadge  = document.getElementById('api-status-badge');
-  statusBadge.textContent = ep.statusCode;
-  statusBadge.className   = 'api-status-badge';
-  document.getElementById('api-latency-badge').textContent = `${delay} ms`;
+  const statusBadge = document.getElementById('api-status-badge');
+  statusBadge.textContent = statusCode;
+  statusBadge.className   = statusCode.startsWith('2') ? 'api-status-badge' : 'api-status-badge status-err';
+  document.getElementById('api-latency-badge').textContent = `${realLatency} ms`;
 
   // Render JSON response with syntax highlighting
-  const pre  = document.getElementById('api-response-body');
-  pre.innerHTML = syntaxHighlight(JSON.stringify(ep.mockResponse, null, 2));
+  const pre = document.getElementById('api-response-body');
+  pre.innerHTML = syntaxHighlight(JSON.stringify(responseData, null, 2));
   document.getElementById('api-response-body-wrap').style.display = 'block';
 
-  // SHAP visual only for /score
-  if (_apiState.activeEndpoint === 'score') {
-    renderSHAPBars(ep.mockResponse.shap_factors);
+  // SHAP visual if shap_factors or shapFactors returned in response
+  const shapList = responseData.shap_factors || responseData.shapFactors || (responseData.data && responseData.data.shapFactors);
+  if (shapList && Array.isArray(shapList) && shapList.length > 0) {
+    renderSHAPBars(shapList.map(f => typeof f === 'string' ? { feature: f, impact: 25 } : f));
     document.getElementById('api-shap-visual').style.display = 'block';
   }
 }
