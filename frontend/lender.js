@@ -1791,7 +1791,6 @@ function startAnalyticsAutoRefresh() {
 function renderAnalyticsCharts() {
   renderScoreDistributionChart();
   renderSignalContributionsRadar();
-  renderApprovalRateLineChart();
   renderLatencyGaugeChart();
 }
 
@@ -2011,88 +2010,7 @@ function renderSignalContributionsRadar() {
   });
 }
 
-// 3. Approval Rate Line Chart (Canvas: #ch-approval)
-function renderApprovalRateLineChart() {
-  const canvas = document.getElementById('ch-approval');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const w = canvas.width;
-  const h = canvas.height;
 
-  ctx.clearRect(0, 0, w, h);
-
-  const paddingLeft = 45;
-  const paddingBottom = 30;
-  const paddingTop = 20;
-  const chartW = w - paddingLeft - 20;
-  const chartH = h - paddingTop - paddingBottom;
-
-  // Gridlines
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-  ctx.lineWidth = 1;
-  ctx.fillStyle = '#8892b0';
-  ctx.font = '10px sans-serif';
-  ctx.textAlign = 'right';
-
-  for (let i = 0; i <= 4; i++) {
-    const pct = i * 25;
-    const y = h - paddingBottom - (i / 4) * chartH;
-    ctx.beginPath();
-    ctx.moveTo(paddingLeft, y);
-    ctx.lineTo(w - 20, y);
-    ctx.stroke();
-    ctx.fillText(`${pct}%`, paddingLeft - 8, y + 3);
-  }
-
-  // Simulated 30-day timeline trend
-  const days = 30;
-  const sahayData = [65, 66, 68, 67, 70, 72, 71, 73, 75, 74, 76, 75, 77, 78, 76, 77, 79, 78, 80, 81, 79, 82, 81, 83, 82, 84, 83, 85, 84, 86];
-  const indData   = [24, 25, 24, 23, 26, 25, 27, 26, 28, 27, 26, 28, 29, 28, 27, 29, 30, 29, 28, 30, 31, 30, 29, 31, 30, 32, 31, 30, 31, 32];
-
-  // X-axis days
-  ctx.textAlign = 'center';
-  for (let d = 0; d < days; d += 5) {
-    const x = paddingLeft + (d / (days - 1)) * chartW;
-    ctx.fillText(`Day ${d + 1}`, x, h - 10);
-  }
-
-  // Helper to draw line
-  function drawLine(data, color, isFilled) {
-    ctx.beginPath();
-    data.forEach((val, idx) => {
-      const x = paddingLeft + (idx / (days - 1)) * chartW;
-      const y = h - paddingBottom - (val / 100) * chartH;
-      if (idx === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    });
-
-    if (isFilled) {
-      const fillPath = new Path2D();
-      data.forEach((val, idx) => {
-        const x = paddingLeft + (idx / (days - 1)) * chartW;
-        const y = h - paddingBottom - (val / 100) * chartH;
-        if (idx === 0) fillPath.moveTo(x, y);
-        else fillPath.lineTo(x, y);
-      });
-      fillPath.lineTo(paddingLeft + chartW, h - paddingBottom);
-      fillPath.lineTo(paddingLeft, h - paddingBottom);
-      fillPath.closePath();
-
-      const grad = ctx.createLinearGradient(0, paddingTop, 0, h - paddingBottom);
-      grad.addColorStop(0, color + '33');
-      grad.addColorStop(1, color + '00');
-      ctx.fillStyle = grad;
-      ctx.fill(fillPath);
-    }
-
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2.5;
-    ctx.stroke();
-  }
-
-  drawLine(indData, '#FF4D4D', false);
-  drawLine(sahayData, '#02C39A', true);
-}
 
 // 4. Time to Score Speedometer Gauge (Canvas: #ch-gauge)
 function renderLatencyGaugeChart() {
