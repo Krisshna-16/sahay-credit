@@ -883,13 +883,21 @@ app.get('/api/ekyc/status/:borrowerId', (req, res) => {
 
 app.post('/api/bureau-check', rateLimit(5, 60 * 1000), (req, res) => {
   try {
-    const { borrowerId, pan, name, dob, mobile } = req.body;
+    const { borrowerId, pan, name, dob, mobile, consent } = req.body;
 
     // Validate Required fields
     if (!borrowerId || !pan || !name || !dob || !mobile) {
       return res.status(400).json({
         success: false,
         error: 'Identity Verification Failed'
+      });
+    }
+
+    // Validate consent was explicitly granted
+    if (!consent || !consent.granted || !consent.timestamp) {
+      return res.status(400).json({
+        success: false,
+        error: 'Bureau check requires explicit digital consent with a timestamp.'
       });
     }
 
@@ -909,6 +917,23 @@ app.post('/api/bureau-check', rateLimit(5, 60 * 1000), (req, res) => {
       });
     }
 
+    // ── Audit Trail: Log the consent and request details ──
+    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+    const auditEntry = {
+      type: 'BUREAU_CONSENT',
+      borrowerId,
+      pan: pan.slice(0, 3) + '****' + pan.slice(-2), // Masked PAN for audit
+      timestamp: new Date().toISOString(),
+      consentTimestamp: consent.timestamp,
+      purpose: consent.purpose || 'Not specified',
+      consentText: consent.consentText || 'Not captured',
+      deviceId: consent.deviceId || 'unknown',
+      ipAddress: clientIp,
+      encryption: 'SSL/TLS (in-transit)',
+      otpToken: consent.otpToken || 'N/A (sandbox mode)'
+    };
+    console.log('[Bureau] Consent Audit:', JSON.stringify(auditEntry, null, 2));
+
     const result = performBureauCheck(borrowerId, { pan, name, dob });
 
     res.json({
@@ -916,7 +941,14 @@ app.post('/api/bureau-check', rateLimit(5, 60 * 1000), (req, res) => {
       data: {
         status: result.status,
         creditScore: result.creditScore,
-        source: result.source
+        source: result.source,
+        audit: {
+          consentRecorded: true,
+          consentTimestamp: consent.timestamp,
+          purpose: consent.purpose,
+          ipAddress: clientIp,
+          encryption: 'SSL/TLS'
+        }
       },
       notice: 'Bureau Check (Simulated Registry) - Architecture ready for CIBIL/Experian API'
     });
@@ -1172,7 +1204,7 @@ app.post('/api/loan-recommendation', (req, res) => {
 
 // Serve frontend for any other routes
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/index.html'));
+  res.sendFile(path.join(__dirname, '../frontend/borrower.html'));
 });
 
 app.listen(PORT, () => {
