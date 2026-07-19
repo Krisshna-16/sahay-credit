@@ -250,6 +250,63 @@ def credit_prob_to_risk_level(p: float) -> str:
     return "High"
 
 
+# ============================================================
+# Affordability Engine — deterministic, no model needed.
+# Turns a risk level + income into concrete loan terms: EMI capacity,
+# safe loan amount, recommended tenure, interest risk band.
+# Uses FOIR (Fixed Obligation to Income Ratio) — standard Indian lending
+# practice for capping how much of monthly income can go to loan EMIs.
+# ============================================================
+
+# Risk-adjusted FOIR caps: lower risk applicants can safely carry a higher
+# EMI-to-income ratio; higher risk applicants get a tighter cap as a
+# built-in safeguard against over-lending.
+FOIR_CAP_BY_RISK = {"Low": 0.50, "Medium": 0.40, "High": 0.30}
+
+# Interest risk bands (annual %) — wider spread for higher risk, standard
+# risk-based pricing. Values are illustrative business parameters, not
+# learned from data — same treatment as the PDO anchor odds in the
+# credit scorecard (a stated business decision, not a fitted number).
+INTEREST_BAND_BY_RISK = {"Low": (10.0, 14.0), "Medium": (14.0, 20.0), "High": (20.0, 28.0)}
+
+DEFAULT_TENURE_MONTHS = 24
+
+
+def compute_affordability(monthly_income: float, spending_ratio: float, risk_level: str) -> dict:
+    if monthly_income <= 0:
+        return {
+            "emi_capacity": 0, "safe_loan_amount": 0, "recommended_emi": 0,
+            "recommended_tenure_months": 0, "interest_rate_band": "N/A",
+            "note": "Income must be greater than zero to compute affordability.",
+        }
+
+    foir_cap = FOIR_CAP_BY_RISK.get(risk_level, 0.30)
+    disposable_income = monthly_income * (1 - min(spending_ratio, 1.0))
+
+    max_emi_by_foir = monthly_income * foir_cap
+    max_emi_by_disposable = disposable_income * 0.8
+    recommended_emi = round(min(max_emi_by_foir, max_emi_by_disposable), 2)
+
+    low_rate, high_rate = INTEREST_BAND_BY_RISK.get(risk_level, (20.0, 28.0))
+    annual_rate = (low_rate + high_rate) / 2
+    monthly_rate = annual_rate / 100 / 12
+    n = DEFAULT_TENURE_MONTHS
+
+    if monthly_rate > 0:
+        growth = (1 + monthly_rate) ** n
+        safe_loan_amount = recommended_emi * (growth - 1) / (monthly_rate * growth)
+    else:
+        safe_loan_amount = recommended_emi * n
+
+    return {
+        "emi_capacity": recommended_emi,
+        "safe_loan_amount": round(safe_loan_amount, 2),
+        "recommended_emi": recommended_emi,
+        "recommended_tenure_months": n,
+        "interest_rate_band": f"{low_rate:.1f}%\u2013{high_rate:.1f}% p.a.",
+    }
+
+
 def prob_to_percentile_score(prob: float, reference_probs: np.ndarray) -> float:
     return float((reference_probs < prob).mean() * 100)
 
@@ -324,11 +381,17 @@ def credit_score(applicant: CreditApplicant):
     score = prob_to_pdo_score(p_default)
     risk_level = credit_prob_to_risk_level(p_default)
     reason_codes = get_reason_codes(CREDIT_EXPLAINER, X)
+    affordability = compute_affordability(
+        monthly_income=applicant.AMT_INCOME_TOTAL,
+        spending_ratio=float(X.iloc[0]["spending_ratio"]),
+        risk_level=risk_level,
+    )
     result = {
         "predicted_default_prob": round(p_default, 6),
         "credit_score": score,
         "risk_level": risk_level,
         "reason_codes": reason_codes,
+        "affordability": affordability,
         "model_version": CREDIT_MODEL_VERSION,
     }
     audit_id = log_prediction("credit/score", "sahaycredit_xgb", CREDIT_MODEL_VERSION, applicant.dict(), result)
