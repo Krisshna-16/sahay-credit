@@ -532,10 +532,13 @@ const dom = {
   // Navigation / Lang
   langBtn: document.getElementById('lang-toggle-btn'),
   screens: {
+    landing: document.getElementById('landing-screen'),
     welcome: document.getElementById('welcome-screen'),
+    bureauGate: document.getElementById('bureau-gate-screen'),
     consent: document.getElementById('consent-screen'),
     rbiLink: document.getElementById('rbi-link-screen'),
     ekyc: document.getElementById('ekyc-screen'),
+    creditCheck: document.getElementById('credit-check-screen'),
     quiz: document.getElementById('quiz-screen'),
     processing: document.getElementById('processing-screen'),
     result: document.getElementById('result-screen'),
@@ -789,10 +792,13 @@ function bindEvents() {
     if (mobileOnboardingBtn) mobileOnboardingBtn.addEventListener('click', closeHub);
   }
 
-  // Welcome Screen -> Start (Proceed to Consent Screen first)
+  // Welcome Screen -> Start (Proceed to Bureau Gate first)
   dom.startBtn.addEventListener('click', () => {
-    navigateTo('consent-screen');
+    navigateTo('bureau-gate-screen');
   });
+
+  // Bureau Gate Screen — form validation and event binding
+  bindBureauGateEvents();
 
   // Consent Screen - Toggles
   dom.consentToggles.upi.addEventListener('change', (e) => {
@@ -1002,6 +1008,75 @@ function bindEvents() {
   const ekycProceedBtn = document.getElementById('ekyc-proceed-btn');
   const ekycRetryBtn = document.getElementById('ekyc-retry-btn');
 
+  // Camera Elements
+  const startCameraBtn = document.getElementById('start-camera-btn');
+  const captureBtn = document.getElementById('capture-btn');
+  const retakeBtn = document.getElementById('retake-btn');
+  const videoElem = document.getElementById('ekyc-video');
+  const photoPreview = document.getElementById('ekyc-photo-preview');
+  const canvasElem = document.getElementById('ekyc-canvas');
+  const cameraPlaceholder = document.getElementById('camera-placeholder');
+  const cameraControls = document.getElementById('camera-controls');
+  const cameraRetakeControls = document.getElementById('camera-retake-controls');
+  let cameraStream = null;
+  let photoCaptured = false;
+
+  if (startCameraBtn) {
+    startCameraBtn.addEventListener('click', async () => {
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+        videoElem.srcObject = cameraStream;
+        videoElem.style.display = 'block';
+        cameraPlaceholder.style.display = 'none';
+        cameraControls.style.display = 'block';
+      } catch (err) {
+        console.error("Error accessing camera: ", err);
+        alert("Camera access denied or unavailable.");
+      }
+    });
+  }
+
+  if (captureBtn) {
+    captureBtn.addEventListener('click', () => {
+      canvasElem.width = videoElem.videoWidth || 300;
+      canvasElem.height = videoElem.videoHeight || 300;
+      const ctx = canvasElem.getContext('2d');
+      ctx.drawImage(videoElem, 0, 0, canvasElem.width, canvasElem.height);
+      const dataUrl = canvasElem.toDataURL('image/jpeg');
+      
+      photoPreview.src = dataUrl;
+      photoPreview.style.display = 'block';
+      videoElem.style.display = 'none';
+      cameraControls.style.display = 'none';
+      cameraRetakeControls.style.display = 'block';
+      
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+      }
+      photoCaptured = true;
+      validateEkycInputs();
+    });
+  }
+
+  if (retakeBtn) {
+    retakeBtn.addEventListener('click', async () => {
+      photoCaptured = false;
+      photoPreview.style.display = 'none';
+      cameraRetakeControls.style.display = 'none';
+      validateEkycInputs();
+      
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+        videoElem.srcObject = cameraStream;
+        videoElem.style.display = 'block';
+        cameraControls.style.display = 'block';
+      } catch (err) {
+        console.error("Error accessing camera: ", err);
+        cameraPlaceholder.style.display = 'flex';
+      }
+    });
+  }
+
   function validateEkycInputs() {
     if (!ekycVerifyBtn) return;
     const aadhaar = (ekycAadhaarInput?.value || '').replace(/\s/g, '');
@@ -1010,7 +1085,7 @@ function bindEvents() {
     const aadhaarValid = /^\d{12}$/.test(aadhaar);
     const panValid = /^[A-Z]{5}\d{4}[A-Z]$/.test(pan);
     const nameValid = name.length >= 2;
-    ekycVerifyBtn.disabled = !(aadhaarValid && panValid && nameValid);
+    ekycVerifyBtn.disabled = !(aadhaarValid && panValid && nameValid && photoCaptured);
   }
 
   if (ekycAadhaarInput) {
@@ -1117,7 +1192,7 @@ function bindEvents() {
 
   if (ekycProceedBtn) {
     ekycProceedBtn.addEventListener('click', () => {
-      navigateTo('quiz-screen');
+      navigateTo('credit-check-screen');
     });
   }
 
@@ -1125,6 +1200,187 @@ function bindEvents() {
     ekycRetryBtn.addEventListener('click', () => {
       document.getElementById('ekyc-step-failed').style.display = 'none';
       document.getElementById('ekyc-step-input').style.display = 'block';
+    });
+  }
+
+  // ── Credit Score Check Screen — Event Handlers ──────────────────────────────
+  const creditCheckBtn = document.getElementById('credit-check-btn');
+  const creditCheckProceedBtn = document.getElementById('credit-check-proceed-btn');
+  const creditCheckProceedNfBtn = document.getElementById('credit-check-proceed-nf-btn');
+  const bureauConsentCheckbox = document.getElementById('bureau-consent-checkbox');
+  let bureauConsentTimestamp = null;
+
+  // Consent checkbox — shows OTP section and records the timestamp
+  let bureauOtpToken = null;
+
+  if (bureauConsentCheckbox) {
+    bureauConsentCheckbox.addEventListener('change', () => {
+      const otpSection = document.getElementById('bureau-otp-section');
+      if (bureauConsentCheckbox.checked) {
+        bureauConsentTimestamp = new Date().toISOString();
+        // Show timestamp
+        const tsBlock = document.getElementById('bureau-consent-timestamp-block');
+        const tsLabel = document.getElementById('bureau-consent-timestamp');
+        if (tsBlock) tsBlock.style.display = 'block';
+        if (tsLabel) tsLabel.textContent = new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'medium' });
+        
+        // Show OTP section
+        if (otpSection) otpSection.style.display = 'block';
+      } else {
+        bureauConsentTimestamp = null;
+        creditCheckBtn.disabled = true;
+        const tsBlock = document.getElementById('bureau-consent-timestamp-block');
+        if (tsBlock) tsBlock.style.display = 'none';
+        if (otpSection) otpSection.style.display = 'none';
+      }
+    });
+  }
+
+  // OTP Send (Bypassed / Simulated)
+  const bureauOtpSendBtn = document.getElementById('bureau-otp-send-btn');
+  if (bureauOtpSendBtn) {
+    bureauOtpSendBtn.addEventListener('click', async () => {
+      const dest = document.getElementById('bureau-otp-destination').value.trim();
+      if (!dest) return alert('Please enter a mobile number or email');
+
+      const origText = bureauOtpSendBtn.textContent;
+      bureauOtpSendBtn.textContent = 'Sending...';
+      bureauOtpSendBtn.disabled = true;
+
+      // Simulate a brief network delay, then bypass directly to the verify step
+      setTimeout(() => {
+        document.getElementById('bureau-otp-send-row').style.display = 'none';
+        document.getElementById('bureau-otp-verify-row').style.display = 'block';
+        bureauOtpSendBtn.textContent = origText;
+        bureauOtpSendBtn.disabled = false;
+      }, 600);
+    });
+  }
+
+  // OTP Verify (Bypassed / Simulated)
+  const bureauOtpVerifyBtn = document.getElementById('bureau-otp-verify-btn');
+  if (bureauOtpVerifyBtn) {
+    bureauOtpVerifyBtn.addEventListener('click', async () => {
+      const code = document.getElementById('bureau-otp-code').value.trim();
+      if (!code) return alert('Please enter the OTP');
+
+      const origText = bureauOtpVerifyBtn.textContent;
+      bureauOtpVerifyBtn.textContent = 'Verifying...';
+      bureauOtpVerifyBtn.disabled = true;
+
+      // Simulate network delay, then verify any code successfully
+      setTimeout(() => {
+        bureauOtpToken = 'BYPASSED-TOKEN-' + Math.floor(Math.random() * 1000000);
+        document.getElementById('bureau-otp-verify-row').style.display = 'none';
+        document.getElementById('bureau-otp-verified-block').style.display = 'block';
+        document.getElementById('bureau-otp-token').textContent = bureauOtpToken;
+        
+        // Finally, enable the credit check button
+        if (creditCheckBtn) creditCheckBtn.disabled = false;
+        
+        bureauOtpVerifyBtn.textContent = origText;
+        bureauOtpVerifyBtn.disabled = false;
+      }, 500);
+    });
+  }
+
+  if (creditCheckBtn) {
+    creditCheckBtn.addEventListener('click', async () => {
+      // Get PAN and Name from what was entered in eKYC
+      const pan = (ekycPanInput?.value || '').trim().toUpperCase();
+      const name = (ekycNameInput?.value || '').trim();
+
+      // Collect consent metadata for audit trail
+      const consentTextEl = document.getElementById('bureau-consent-text');
+      const consentText = consentTextEl ? consentTextEl.textContent.trim() : '';
+      const deviceId = navigator.userAgent || 'unknown-device';
+
+      // Show loading
+      document.getElementById('credit-check-step-init').style.display = 'none';
+      document.getElementById('credit-check-step-loading').style.display = 'block';
+      document.getElementById('credit-check-step-found').style.display = 'none';
+      document.getElementById('credit-check-step-not-found').style.display = 'none';
+
+      // Animate log lines
+      const logs = [
+        document.getElementById('cc-log-1'),
+        document.getElementById('cc-log-2'),
+        document.getElementById('cc-log-3'),
+        document.getElementById('cc-log-4')
+      ];
+      logs.forEach(l => { if (l) l.style.opacity = '0.3'; });
+      for (let i = 0; i < logs.length; i++) {
+        await new Promise(r => setTimeout(r, 700));
+        if (logs[i]) logs[i].style.opacity = '1';
+      }
+      await new Promise(r => setTimeout(r, 500));
+
+      try {
+        const resp = await fetch('/api/bureau-check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            borrowerId: 'BRW-' + Math.random().toString(36).slice(2, 8).toUpperCase(),
+            pan: pan,
+            name: name,
+            dob: '1990-01-15',
+            mobile: '9876543210',
+            consent: {
+              granted: true,
+              timestamp: bureauConsentTimestamp,
+              purpose: 'Loan Application — Credit Eligibility Assessment',
+              consentText: consentText,
+              deviceId: deviceId,
+              otpToken: bureauOtpToken
+            }
+          })
+        });
+        const data = await resp.json();
+
+        document.getElementById('credit-check-step-loading').style.display = 'none';
+
+        if (data.success && data.data && data.data.creditScore) {
+          // Score found
+          const score = data.data.creditScore;
+          document.getElementById('credit-check-score-value').textContent = score;
+          document.getElementById('credit-check-source').textContent = data.data.source || 'CIBIL (Sandbox)';
+
+          // Determine rating
+          let rating = 'Poor';
+          let ratingColor = '#e74c3c';
+          if (score >= 750) { rating = 'Excellent'; ratingColor = 'var(--secondary)'; }
+          else if (score >= 650) { rating = 'Good'; ratingColor = '#60a5fa'; }
+          else if (score >= 550) { rating = 'Fair'; ratingColor = 'var(--warning)'; }
+          const ratingEl = document.getElementById('credit-check-score-rating');
+          ratingEl.textContent = rating;
+          ratingEl.style.color = ratingColor;
+
+          // Store in state
+          state.existingCreditScore = score;
+          document.getElementById('credit-check-step-found').style.display = 'block';
+        } else {
+          // No score found
+          state.existingCreditScore = null;
+          document.getElementById('credit-check-step-not-found').style.display = 'block';
+        }
+      } catch (err) {
+        console.error('Bureau check error:', err);
+        document.getElementById('credit-check-step-loading').style.display = 'none';
+        state.existingCreditScore = null;
+        document.getElementById('credit-check-step-not-found').style.display = 'block';
+      }
+    });
+  }
+
+  if (creditCheckProceedBtn) {
+    creditCheckProceedBtn.addEventListener('click', () => {
+      navigateTo('quiz-screen');
+    });
+  }
+
+  if (creditCheckProceedNfBtn) {
+    creditCheckProceedNfBtn.addEventListener('click', () => {
+      navigateTo('quiz-screen');
     });
   }
 }
@@ -1442,7 +1698,7 @@ async function submitAnswersToAPI() {
 }
 // Sync segmented progress bar
 function updateBorrowerProgress(screenId) {
-  const steps = ['welcome-screen', 'consent-screen', 'rbi-link-screen', 'ekyc-screen', 'quiz-screen', 'processing-screen', 'result-screen', 'shap-screen', 'comparison-screen', 'emi-planner-screen'];
+  const steps = ['landing-screen', 'welcome-screen', 'bureau-gate-screen', 'consent-screen', 'rbi-link-screen', 'ekyc-screen', 'credit-check-screen', 'quiz-screen', 'processing-screen', 'result-screen', 'shap-screen', 'comparison-screen', 'emi-planner-screen'];
   const currentIdx = steps.indexOf(screenId);
   
   // Note: There are only 5 progress segments in the DOM, so comparison/planner screens are treated as phase 5 completed (fully filled progress)
@@ -1460,8 +1716,11 @@ function updateBorrowerProgress(screenId) {
 
 // Handle Page Navigation Routing
 const SCREEN_ALIASES = {
+  landing:    'landing-screen',
   rbiLink:    'rbi-link-screen',
+  bureauGate: 'bureau-gate-screen',
   ekyc:       'ekyc-screen',
+  creditCheck: 'credit-check-screen',
   emiPlanner: 'emi-planner-screen',
   vault:      'vault-screen',
   privacy:    'privacy-screen',
@@ -1496,8 +1755,21 @@ function renderScreen() {
   // Sync top segmented progress bar
   updateBorrowerProgress(state.currentScreen);
 
+  // Hide header & progress bar on landing screen
+  const appHeader = document.querySelector('header');
+  const progressBar = document.getElementById('borrower-progress-bar');
+  if (state.currentScreen === 'landing-screen') {
+    if (appHeader) appHeader.style.display = 'none';
+    if (progressBar) progressBar.style.display = 'none';
+  } else {
+    if (appHeader) appHeader.style.display = '';
+    if (progressBar) progressBar.style.display = '';
+  }
+
   // Apply specific logic on route activations
-  if (state.currentScreen === 'rbi-link-screen') {
+  if (state.currentScreen === 'bureau-gate-screen') {
+    resetBureauGateUI();
+  } else if (state.currentScreen === 'rbi-link-screen') {
     initRbiLinkingFlow();
   } else if (state.currentScreen === 'ekyc-screen') {
     // Reset to input step when entering eKYC screen
@@ -1517,6 +1789,24 @@ function renderScreen() {
       if (suc) suc.style.display = 'block';
       if (fail) fail.style.display = 'none';
     }
+  } else if (state.currentScreen === 'credit-check-screen') {
+    // Populate PAN and Name from eKYC inputs
+    const panInput = document.getElementById('ekyc-pan-input');
+    const nameInput = document.getElementById('ekyc-name-input');
+    const panDisplay = document.getElementById('credit-check-pan-display');
+    const nameDisplay = document.getElementById('credit-check-name-display');
+    if (panDisplay && panInput) panDisplay.textContent = panInput.value.trim().toUpperCase() || '—';
+    if (nameDisplay && nameInput) nameDisplay.textContent = nameInput.value.trim() || '—';
+
+    // Reset to init step
+    const init = document.getElementById('credit-check-step-init');
+    const loading = document.getElementById('credit-check-step-loading');
+    const found = document.getElementById('credit-check-step-found');
+    const notFound = document.getElementById('credit-check-step-not-found');
+    if (init) init.style.display = 'block';
+    if (loading) loading.style.display = 'none';
+    if (found) found.style.display = 'none';
+    if (notFound) notFound.style.display = 'none';
   } else if (state.currentScreen === 'quiz-screen') {
     renderQuestion();
   } else if (state.currentScreen === 'processing-screen') {
@@ -2768,6 +3058,30 @@ function simulateDocumentUpload(docId) {
 }
 
 // Run app
+// Landing screen button handlers
+document.addEventListener('DOMContentLoaded', () => {
+  const borrowerBtn = document.getElementById('landing-borrower-btn');
+  const getStartedBtn = document.getElementById('landing-get-started-btn');
+  
+  if (borrowerBtn) {
+    borrowerBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const landingEl = document.getElementById('landing-screen');
+      if (landingEl) landingEl.style.display = 'none';
+      navigateTo('welcome-screen');
+    });
+  }
+  
+  if (getStartedBtn) {
+    getStartedBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const landingEl = document.getElementById('landing-screen');
+      if (landingEl) landingEl.style.display = 'none';
+      navigateTo('welcome-screen');
+    });
+  }
+});
+
 document.addEventListener('DOMContentLoaded', init);
 
 /* ================================================================
@@ -3037,6 +3351,151 @@ function flAnimatePackets({ ids, routes, duration, label }) {
   }
 
   requestAnimationFrame(frame);
+}
+
+/* ================================================================
+   CREDIT BUREAU GATEWAY ENGINE
+   ================================================================ */
+
+function resetBureauGateUI() {
+  const form = document.getElementById('bureau-gate-form');
+  const checking = document.getElementById('bureau-gate-checking');
+  const eligible = document.getElementById('bureau-gate-eligible');
+  const blocked = document.getElementById('bureau-gate-blocked');
+  if (form) form.style.display = 'block';
+  if (checking) checking.style.display = 'none';
+  if (eligible) eligible.style.display = 'none';
+  if (blocked) blocked.style.display = 'none';
+
+  // Reset log line styles
+  ['bureau-log-1', 'bureau-log-2', 'bureau-log-3'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.style.opacity = '0.3'; el.style.transition = 'opacity 0.4s'; }
+  });
+}
+
+function validateBureauGateInputs() {
+  const name = (document.getElementById('bureau-name-input')?.value || '').trim();
+  const pan = (document.getElementById('bureau-pan-input')?.value || '').trim().toUpperCase();
+  const dob = (document.getElementById('bureau-dob-input')?.value || '').trim();
+  const mobile = (document.getElementById('bureau-mobile-input')?.value || '').trim();
+
+  const nameValid = name.length >= 2;
+  const panValid = /^[A-Z]{5}\d{4}[A-Z]$/.test(pan);
+  const dobValid = dob.length > 0 && !isNaN(Date.parse(dob));
+  const mobileValid = /^\d{10}$/.test(mobile);
+
+  const btn = document.getElementById('bureau-check-btn');
+  if (btn) btn.disabled = !(nameValid && panValid && dobValid && mobileValid);
+}
+
+function bindBureauGateEvents() {
+  const nameInput = document.getElementById('bureau-name-input');
+  const panInput = document.getElementById('bureau-pan-input');
+  const dobInput = document.getElementById('bureau-dob-input');
+  const mobileInput = document.getElementById('bureau-mobile-input');
+  const checkBtn = document.getElementById('bureau-check-btn');
+  const proceedBtn = document.getElementById('bureau-proceed-btn');
+  const restartBtn = document.getElementById('bureau-restart-btn');
+
+  if (nameInput) nameInput.addEventListener('input', validateBureauGateInputs);
+  if (panInput) panInput.addEventListener('input', validateBureauGateInputs);
+  if (dobInput) dobInput.addEventListener('input', validateBureauGateInputs);
+  if (mobileInput) {
+    mobileInput.addEventListener('input', (e) => {
+      e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
+      validateBureauGateInputs();
+    });
+  }
+
+  if (checkBtn) {
+    checkBtn.addEventListener('click', async () => {
+      const name = document.getElementById('bureau-name-input').value.trim();
+      const pan = document.getElementById('bureau-pan-input').value.trim().toUpperCase();
+      const dob = document.getElementById('bureau-dob-input').value.trim();
+      const mobile = document.getElementById('bureau-mobile-input').value.trim();
+
+      // Hide form, show checking animation
+      document.getElementById('bureau-gate-form').style.display = 'none';
+      document.getElementById('bureau-gate-checking').style.display = 'block';
+      document.getElementById('bureau-gate-eligible').style.display = 'none';
+      document.getElementById('bureau-gate-blocked').style.display = 'none';
+
+      // Animate log lines
+      const logs = [
+        document.getElementById('bureau-log-1'),
+        document.getElementById('bureau-log-2'),
+        document.getElementById('bureau-log-3')
+      ];
+      logs.forEach(l => { if (l) { l.style.opacity = '0.3'; l.style.transition = 'opacity 0.4s'; }});
+
+      for (let i = 0; i < logs.length; i++) {
+        await new Promise(r => setTimeout(r, 700));
+        if (logs[i]) logs[i].style.opacity = '1';
+      }
+
+      // Call backend API
+      try {
+        const resp = await fetch('/api/bureau-check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            borrowerId: state.borrowerId,
+            pan, name, dob, mobile
+          })
+        });
+        const data = await resp.json();
+
+        await new Promise(r => setTimeout(r, 500));
+        document.getElementById('bureau-gate-checking').style.display = 'none';
+
+        if (data.success && data.data.status === 'HAS_CREDIT_HISTORY') {
+          // Blocked — has existing credit
+          document.getElementById('bureau-gate-blocked').style.display = 'block';
+          const scoreEl = document.getElementById('bureau-blocked-score');
+          if (scoreEl) scoreEl.textContent = data.data.creditScore || '—';
+        } else {
+          // Eligible — no credit history (or API returned NO_CREDIT_HISTORY)
+          document.getElementById('bureau-gate-eligible').style.display = 'block';
+          // Pre-fill eKYC fields with what the user already entered
+          const ekycNameInput = document.getElementById('ekyc-name-input');
+          const ekycPanInput = document.getElementById('ekyc-pan-input');
+          if (ekycNameInput && name) ekycNameInput.value = name;
+          if (ekycPanInput && pan) ekycPanInput.value = pan;
+          // Store name for consent signature pre-fill
+          if (name) state.signatureName = name;
+        }
+      } catch (err) {
+        // API unavailable — default to eligible (fail-open for demo)
+        await new Promise(r => setTimeout(r, 500));
+        document.getElementById('bureau-gate-checking').style.display = 'none';
+        document.getElementById('bureau-gate-eligible').style.display = 'block';
+      }
+    });
+  }
+
+  if (proceedBtn) {
+    proceedBtn.addEventListener('click', () => {
+      navigateTo('consent-screen');
+    });
+  }
+
+  if (restartBtn) {
+    restartBtn.addEventListener('click', () => {
+      // Reset form inputs
+      const nameInput = document.getElementById('bureau-name-input');
+      const panInput = document.getElementById('bureau-pan-input');
+      const dobInput = document.getElementById('bureau-dob-input');
+      const mobileInput = document.getElementById('bureau-mobile-input');
+      if (nameInput) nameInput.value = '';
+      if (panInput) panInput.value = '';
+      if (dobInput) dobInput.value = '';
+      if (mobileInput) mobileInput.value = '';
+      const btn = document.getElementById('bureau-check-btn');
+      if (btn) btn.disabled = true;
+      resetBureauGateUI();
+    });
+  }
 }
 
 /* ================================================================

@@ -1,0 +1,32 @@
+{
+  "brier_comparison": {
+    "leaky_10feat": 0.1274,
+    "intermediate_clean_8feat": 0.19159655917655743,
+    "final_patched_10feat_raw": 0.2030448208489097,
+    "final_patched_10feat_calibrated": 0.08797808927991853
+  },
+  "calibration_fix": {
+    "source": "train_set_only",
+    "train_samples": 408,
+    "test_set_used_for_artifact": false
+  },
+  "calibration_comparison": {
+    "raw_lr": {
+      "auc": 0.7721311475409836,
+      "brier": 0.2030448208489097,
+      "ece": 0.2717779832507502
+    },
+    "isotonic": {
+      "auc": 0.7765027322404372,
+      "brier": 0.09023865376706385,
+      "ece": 0.030014139955524145
+    },
+    "platt": {
+      "auc": 0.774863387978142,
+      "brier": 0.08797808927991853,
+      "ece": 0.036682408910294
+    },
+    "chosen": "platt",
+    "reason": "At n=408 training samples, Platt (sigmoid) scaling is the safer and more defensible choice. Isotonic regression is non-parametric and needs ~1,000+ samples to calibrate reliably without overfitting to noise. The difference between the two methods on test-set Brier and ECE is marginal (within noise at this sample size). Platt scaling's 2-parameter sigmoid fit is consistent with the overall methodology: favor simpler, more sample-efficient methods (WOE binning + Logistic Regression) when the dataset is small."
+  }
+}

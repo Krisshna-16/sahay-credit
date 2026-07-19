@@ -156,8 +156,88 @@
       <!-- Main Dynamic Content Wrapper -->
       <main class="content-container">
         
+        <!-- ================= LANDING SCREEN ================= -->
+        <section id="landing-screen" class="app-screen active" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999; background: #0b0f19; overflow: hidden;">
+          <style>
+            #landing-screen { font-family: 'Plus Jakarta Sans', 'Outfit', sans-serif; }
+            #landing-screen .landing-glow-1 { position: absolute; top: -10%; left: -10%; width: 50vw; height: 50vw; background: radial-gradient(circle, rgba(56,189,248,0.15) 0%, transparent 70%); border-radius: 50%; z-index: 0; filter: blur(60px); }
+            #landing-screen .landing-glow-2 { position: absolute; bottom: -20%; right: -10%; width: 60vw; height: 60vw; background: radial-gradient(circle, rgba(46,230,139,0.1) 0%, transparent 70%); border-radius: 50%; z-index: 0; filter: blur(60px); }
+            #landing-screen .landing-grid { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 50px 50px; z-index: 0; mask-image: radial-gradient(circle at center, black, transparent 80%); -webkit-mask-image: radial-gradient(circle at center, black, transparent 80%); }
+            #landing-screen .landing-header { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 5%; max-width: 1400px; margin: 0 auto; width: 100%; position: relative; z-index: 10; }
+            #landing-screen .landing-logo { display: flex; align-items: center; gap: 0.5rem; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px; color: #f8fafc; }
+            #landing-screen .landing-logo-icon { color: #2ee68b; font-size: 1.8rem; }
+            #landing-screen .landing-nav { display: flex; align-items: center; gap: 3rem; background: rgba(255,255,255,0.03); padding: 0.5rem 2rem; border-radius: 50px; border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+            #landing-screen .landing-nav a { color: #94a3b8; text-decoration: none; font-weight: 500; font-size: 0.95rem; transition: color 0.3s; }
+            #landing-screen .landing-nav a:hover, #landing-screen .landing-nav a.active { color: #f8fafc; }
+            #landing-screen .landing-nav-right { display: flex; align-items: center; }
+            #landing-screen .landing-btn-outline { border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); padding: 0.6rem 1.5rem; border-radius: 50px; color: #f8fafc; font-weight: 600; text-decoration: none; transition: all 0.3s; }
+            #landing-screen .landing-btn-outline:hover { border-color: #2ee68b; background: rgba(46,230,139,0.05); color: #2ee68b; }
+            #landing-screen .landing-main { display: flex; flex-direction: row; align-items: center; justify-content: space-between; min-height: calc(100vh - 100px); padding: 2rem 5%; max-width: 1400px; margin: 0 auto; width: 100%; position: relative; z-index: 2; }
+            #landing-screen .landing-left { flex: 1.1; padding-right: 4rem; }
+            #landing-screen .landing-badge { display: inline-block; padding: 0.4rem 1rem; background: rgba(46,230,139,0.1); color: #2ee68b; border: 1px solid rgba(46,230,139,0.2); border-radius: 50px; font-size: 0.85rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 1.5rem; }
+            #landing-screen .landing-left h1 { font-size: 4rem; line-height: 1.1; font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -1.5px; background: linear-gradient(135deg, #fff 0%, #94a3b8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+            #landing-screen .landing-left p { font-size: 1.25rem; line-height: 1.7; color: #94a3b8; margin-bottom: 3rem; font-weight: 400; max-width: 90%; }
+            #landing-screen .landing-actions { display: flex; gap: 1.5rem; }
+            #landing-screen .landing-btn-primary { display: inline-flex; justify-content: center; align-items: center; background-color: #2ee68b; color: #0b0f19; font-weight: 700; font-size: 1.1rem; padding: 1.1rem 3rem; border-radius: 50px; text-decoration: none; box-shadow: 0 10px 30px rgba(46,230,139,0.4); transition: all 0.3s cubic-bezier(0.4,0,0.2,1); border: 2px solid #2ee68b; flex: 1; max-width: 220px; cursor: pointer; }
+            #landing-screen .landing-btn-primary:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 15px 40px rgba(46,230,139,0.6); }
+            #landing-screen .landing-btn-secondary { display: inline-flex; justify-content: center; align-items: center; background-color: transparent; color: #f8fafc; font-weight: 600; font-size: 1.1rem; padding: 1.1rem 3rem; border-radius: 50px; text-decoration: none; border: 2px solid rgba(255,255,255,0.08); transition: all 0.3s cubic-bezier(0.4,0,0.2,1); flex: 1; max-width: 220px; backdrop-filter: blur(5px); }
+            #landing-screen .landing-btn-secondary:hover { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.05); transform: translateY(-3px); }
+            #landing-screen .landing-right { flex: 0.9; display: flex; justify-content: center; align-items: center; position: relative; }
+            #landing-screen .landing-img-glow { position: absolute; width: 70%; height: 70%; background: radial-gradient(circle, rgba(46,230,139,0.4) 0%, transparent 60%); filter: blur(40px); z-index: 1; animation: landingPulse 4s ease-in-out infinite alternate; }
+            #landing-screen .landing-right img { width: 100%; max-width: 600px; height: auto; position: relative; z-index: 2; filter: drop-shadow(0 20px 30px rgba(0,0,0,0.5)); }
+            @keyframes landingPulse { 0% { opacity: 0.5; transform: scale(1); } 100% { opacity: 0.8; transform: scale(1.1); } }
+            @media (max-width: 1024px) {
+              #landing-screen .landing-header { flex-direction: column; gap: 1.5rem; }
+              #landing-screen .landing-nav { width: 100%; justify-content: center; gap: 1.5rem; }
+              #landing-screen .landing-nav-right { display: none; }
+              #landing-screen .landing-main { flex-direction: column; text-align: center; padding-top: 3rem; }
+              #landing-screen .landing-left { padding-right: 0; margin-bottom: 4rem; display: flex; flex-direction: column; align-items: center; }
+              #landing-screen .landing-left h1 { font-size: 3rem; }
+              #landing-screen .landing-left p { max-width: 100%; }
+              #landing-screen .landing-actions { justify-content: center; width: 100%; flex-wrap: wrap; }
+              #landing-screen .landing-right { width: 100%; margin-bottom: 3rem; }
+            }
+          </style>
+
+          <div class="landing-glow-1"></div>
+          <div class="landing-glow-2"></div>
+          <div class="landing-grid"></div>
+
+          <div class="landing-header">
+            <div class="landing-logo">
+              <span class="landing-logo-icon">⚡</span>
+              Sahay Credit
+            </div>
+            <div class="landing-nav">
+              <a href="#" class="active">Home</a>
+              <a href="map.html">Map</a>
+              <a href="#">Features</a>
+              <a href="demo.html">Demo</a>
+            </div>
+            <div class="landing-nav-right">
+              <a href="#" id="landing-get-started-btn" class="landing-btn-outline">Get Started</a>
+            </div>
+          </div>
+
+          <div class="landing-main">
+            <div class="landing-left">
+              <div class="landing-badge">AI-Powered Scoring</div>
+              <h1>Financial Inclusion Starts With Better Credit</h1>
+              <p>Helping first-time borrowers, gig workers, and MSMEs access fair credit through behavioral analysis.</p>
+              <div class="landing-actions">
+                <a href="lender.html" class="landing-btn-primary">Lender</a>
+                <a href="#" id="landing-borrower-btn" class="landing-btn-secondary">Borrower</a>
+              </div>
+            </div>
+            <div class="landing-right">
+              <div class="landing-img-glow"></div>
+              <img src="hands.png" alt="Hands holding glowing gold coin">
+            </div>
+          </div>
+        </section>
+
         <!-- ================= WELCOME SCREEN ================= -->
-        <section id="welcome-screen" class="app-screen active">
+        <section id="welcome-screen" class="app-screen">
           <div class="welcome-hero animate-fade-in">
             <div class="hero-badge">
               <span id="welcome-badge-text">Alternative Scoring</span>
@@ -206,6 +286,130 @@
             <a href="demo.html" class="demo-link" style="display: none; text-align: center; margin-top: 15px; font-size: 0.8rem; color: var(--secondary); text-decoration: none; font-weight: 600; transition: all 0.2s ease;">
               📖 See Ramesh's Story (Kirana Shop Demo)
             </a>
+          </div>
+        </section>
+
+        <!-- ================= CREDIT BUREAU GATEWAY SCREEN ================= -->
+        <section id="bureau-gate-screen" class="app-screen">
+          <div class="consent-header">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+              <span style="font-size: 0.6rem; font-weight: 700; text-transform: uppercase; background: rgba(2, 128, 144, 0.15); color: #8ce1ec; padding: 3px 8px; border-radius: 12px; border: 1px solid rgba(2, 128, 144, 0.3); letter-spacing: 0.5px;">CREDIT BUREAU GATEWAY</span>
+            </div>
+            <h2 id="bureau-gate-title" class="consent-title">Check Eligibility</h2>
+            <p id="bureau-gate-subtitle" class="consent-desc">We first check if you already have a formal credit history. If you do, you can use the traditional banking process instead.</p>
+          </div>
+
+          <!-- Step 1: Identity Input Form -->
+          <div id="bureau-gate-form" class="rbi-step-container">
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+              <!-- Full Name -->
+              <div class="rbi-input-group">
+                <label for="bureau-name-input" class="rbi-input-label" style="display: flex; align-items: center; gap: 6px;">
+                  <span style="font-size: 0.85rem;">👤</span> <span id="bureau-lbl-name">Full Name</span> <span style="color: #e74c3c; font-size: 0.7rem;">*</span>
+                </label>
+                <input type="text" id="bureau-name-input" class="rbi-input-field-text" placeholder="e.g. Ramesh Kumar" autocomplete="off">
+              </div>
+
+              <!-- PAN Number -->
+              <div class="rbi-input-group">
+                <label for="bureau-pan-input" class="rbi-input-label" style="display: flex; align-items: center; gap: 6px;">
+                  <span style="font-size: 0.85rem;">📄</span> <span id="bureau-lbl-pan">PAN Number</span> <span style="color: #e74c3c; font-size: 0.7rem;">*</span>
+                </label>
+                <input type="text" id="bureau-pan-input" class="rbi-input-field-text" placeholder="e.g. ABCDE1234F" maxlength="10" autocomplete="off" style="text-transform: uppercase; letter-spacing: 1px; font-family: monospace;">
+                <p class="rbi-input-hint" style="font-size: 0.62rem; color: var(--text-muted); margin-top: 4px;">Format: 5 letters, 4 digits, 1 letter (e.g. ABCDE1234F)</p>
+              </div>
+
+              <!-- Date of Birth -->
+              <div class="rbi-input-group">
+                <label for="bureau-dob-input" class="rbi-input-label" style="display: flex; align-items: center; gap: 6px;">
+                  <span style="font-size: 0.85rem;">📅</span> <span id="bureau-lbl-dob">Date of Birth</span> <span style="color: #e74c3c; font-size: 0.7rem;">*</span>
+                </label>
+                <input type="date" id="bureau-dob-input" class="rbi-input-field-text" autocomplete="off" min="1900-01-01" max="2030-12-31" style="color: var(--text-main); background: rgba(10, 25, 47, 0.95);">
+              </div>
+
+              <!-- Mobile Number -->
+              <div class="rbi-input-group">
+                <label for="bureau-mobile-input" class="rbi-input-label" style="display: flex; align-items: center; gap: 6px;">
+                  <span style="font-size: 0.85rem;">📱</span> <span id="bureau-lbl-mobile">Mobile Number</span> <span style="color: #e74c3c; font-size: 0.7rem;">*</span>
+                </label>
+                <input type="tel" id="bureau-mobile-input" class="rbi-input-field-text" placeholder="e.g. 9876543210" maxlength="10" autocomplete="off" style="letter-spacing: 1px; font-family: monospace;" inputmode="numeric">
+                <p class="rbi-input-hint" style="font-size: 0.62rem; color: var(--text-muted); margin-top: 4px;">10-digit mobile number linked to your identity.</p>
+              </div>
+            </div>
+
+            <div class="action-footer" style="margin-top: 25px;">
+              <button id="bureau-check-btn" class="btn btn-primary btn-glow" disabled>
+                <span id="bureau-check-btn-text">Check Eligibility</span>
+                <span class="btn-icon">→</span>
+              </button>
+              <p style="font-size: 0.6rem; color: var(--text-muted); text-align: center; margin-top: 8px;">
+                🔒 Your identity is checked securely against bureau records.
+              </p>
+            </div>
+          </div>
+
+          <!-- Step 2: Checking Animation -->
+          <div id="bureau-gate-checking" class="rbi-step-container" style="display: none;">
+            <div class="rbi-status-header">
+              <div class="rbi-spinner">
+                <div class="spinner-circle"></div>
+              </div>
+              <h3 id="bureau-gate-check-status" class="rbi-status-title">Checking Bureau Records...</h3>
+            </div>
+            <div class="rbi-logs-container card-glow">
+              <div class="rbi-log-line" id="bureau-log-1">• Validating identity documents...</div>
+              <div class="rbi-log-line" id="bureau-log-2">• Querying credit bureau registry...</div>
+              <div class="rbi-log-line" id="bureau-log-3">• Analyzing credit history status...</div>
+            </div>
+          </div>
+
+          <!-- Step 3A: No Credit History — Eligible -->
+          <div id="bureau-gate-eligible" class="rbi-step-container" style="display: none;">
+            <div style="text-align: center; padding: 20px 0;">
+              <div style="font-size: 3rem; margin-bottom: 12px;">✅</div>
+              <h3 id="bureau-eligible-title" style="font-size: 1rem; font-weight: 700; color: var(--secondary); margin-bottom: 6px;">No Formal Credit History Found</h3>
+              <p id="bureau-eligible-desc" style="font-size: 0.78rem; color: var(--text-sub); line-height: 1.5; margin-bottom: 16px;">You are eligible for SahayCredit's alternative credit assessment. We'll use your digital footprint and behaviour data to build your credit profile.</p>
+            </div>
+            <div style="background: rgba(2, 195, 154, 0.06); border: 1px solid rgba(2, 195, 154, 0.15); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 6px;">
+              <div style="display: flex; justify-content: space-between; font-size: 0.68rem;">
+                <span style="color: var(--text-muted);">Status</span>
+                <span id="bureau-eligible-status" style="color: var(--secondary); font-weight: 700;">Eligible for SahayCredit ✓</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.68rem;">
+                <span style="color: var(--text-muted);">Source</span>
+                <span style="color: var(--warning); font-weight: 600;">Prototype Bureau (Sandbox)</span>
+              </div>
+            </div>
+            <div class="action-footer" style="margin-top: 20px;">
+              <button id="bureau-proceed-btn" class="btn btn-primary btn-glow">
+                <span id="bureau-proceed-btn-text">Continue to SahayCredit</span>
+                <span class="btn-icon">→</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Step 3B: Has Credit History — Stop -->
+          <div id="bureau-gate-blocked" class="rbi-step-container" style="display: none;">
+            <div style="text-align: center; padding: 20px 0;">
+              <div style="font-size: 3rem; margin-bottom: 12px;">🏦</div>
+              <h3 id="bureau-blocked-title" style="font-size: 1rem; font-weight: 700; color: var(--warning); margin-bottom: 6px;">Existing Credit History Detected</h3>
+              <p id="bureau-blocked-desc" style="font-size: 0.78rem; color: var(--text-sub); line-height: 1.5; margin-bottom: 16px;">You already have a formal credit record. Please use the standard banking credit assessment process. SahayCredit is designed for borrowers without existing credit history.</p>
+            </div>
+            <div style="background: rgba(244, 162, 97, 0.06); border: 1px solid rgba(244, 162, 97, 0.15); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 6px;">
+              <div style="display: flex; justify-content: space-between; font-size: 0.68rem;">
+                <span style="color: var(--text-muted);">Bureau Score</span>
+                <span id="bureau-blocked-score" style="color: var(--warning); font-weight: 700;">742</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.68rem;">
+                <span style="color: var(--text-muted);">Recommendation</span>
+                <span style="color: var(--text-sub); font-weight: 600;">Use Traditional Credit Process</span>
+              </div>
+            </div>
+            <div class="action-footer" style="margin-top: 20px;">
+              <button id="bureau-restart-btn" class="btn btn-secondary" style="width: 100%;">
+                <span id="bureau-restart-btn-text">← Try Different Identity</span>
+              </button>
+            </div>
           </div>
         </section>
 
@@ -560,6 +764,32 @@
                 </label>
                 <input type="text" id="ekyc-name-input" class="rbi-input-field-text" placeholder="e.g. Ramesh Kumar" autocomplete="off">
               </div>
+
+              <!-- Live Selfie Capture -->
+              <div class="rbi-input-group">
+                <label class="rbi-input-label" style="display: flex; align-items: center; gap: 6px;">
+                  <span style="font-size: 0.85rem;">📷</span> Live Selfie
+                </label>
+                <div class="camera-container" id="camera-container">
+                  <video id="ekyc-video" autoplay playsinline style="display: none;"></video>
+                  <img id="ekyc-photo-preview" style="display: none;" alt="Selfie preview" />
+                  <canvas id="ekyc-canvas" style="display: none;"></canvas>
+                  
+                  <div class="camera-placeholder" id="camera-placeholder">
+                    <span style="font-size: 2rem;">📸</span>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">Take a clear photo of your face</p>
+                    <button type="button" id="start-camera-btn" class="btn btn-secondary" style="margin-top: 12px; padding: 6px 12px; font-size: 0.75rem;">Open Camera</button>
+                  </div>
+                  
+                  <div class="camera-controls" id="camera-controls" style="display: none; margin-top: 10px;">
+                    <button type="button" id="capture-btn" class="btn btn-primary btn-glow" style="padding: 6px 16px; font-size: 0.75rem; border-radius: 4px;">Capture</button>
+                  </div>
+                  
+                  <div class="camera-retake" id="camera-retake-controls" style="display: none; margin-top: 10px;">
+                    <button type="button" id="retake-btn" class="btn btn-secondary" style="padding: 6px 16px; font-size: 0.75rem;">Retake</button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div class="action-footer" style="margin-top: 25px;">
@@ -628,6 +858,212 @@
             <div class="action-footer" style="margin-top: 20px;">
               <button id="ekyc-retry-btn" class="btn btn-primary btn-glow">
                 <span>Try Again</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= CREDIT SCORE CHECK SCREEN ================= -->
+        <section id="credit-check-screen" class="app-screen">
+          <div class="consent-header">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+              <span style="font-size: 0.6rem; font-weight: 700; text-transform: uppercase; background: rgba(96, 165, 250, 0.15); color: #60a5fa; padding: 3px 8px; border-radius: 12px; border: 1px solid rgba(96, 165, 250, 0.3); letter-spacing: 0.5px;">BUREAU CHECK</span>
+            </div>
+            <h2 id="credit-check-title" class="consent-title">Existing Credit Score Lookup</h2>
+            <p id="credit-check-subtitle" class="consent-desc">We'll check if you have an existing credit score using the PAN you provided during identity verification.</p>
+          </div>
+
+          <!-- Step 1: Consent & Initiate Check -->
+          <div id="credit-check-step-init" class="rbi-step-container">
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px;">
+              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                <span style="font-size: 2rem;">🏦</span>
+                <div>
+                  <p style="font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin: 0;">Credit Bureau Inquiry</p>
+                  <p style="font-size: 0.65rem; color: var(--text-muted); margin: 2px 0 0 0;">Checks CIBIL / Experian / Equifax (Sandbox)</p>
+                </div>
+              </div>
+
+              <!-- Your Details -->
+              <div style="background: rgba(2, 128, 144, 0.08); border: 1px solid rgba(2, 128, 144, 0.15); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.72rem; margin-bottom: 6px;">
+                  <span style="color: var(--text-muted);">PAN Number</span>
+                  <span id="credit-check-pan-display" style="color: var(--text-main); font-weight: 600; font-family: monospace; letter-spacing: 1px;">—</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.72rem;">
+                  <span style="color: var(--text-muted);">Name</span>
+                  <span id="credit-check-name-display" style="color: var(--text-main); font-weight: 600;">—</span>
+                </div>
+              </div>
+
+              <!-- Purpose Declaration -->
+              <div style="background: rgba(96, 165, 250, 0.06); border: 1px solid rgba(96, 165, 250, 0.15); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+                <p style="font-size: 0.7rem; font-weight: 700; color: #60a5fa; margin: 0 0 6px 0; text-transform: uppercase; letter-spacing: 0.5px;">📋 Purpose of Inquiry</p>
+                <p style="font-size: 0.68rem; color: var(--text-sub, #E0E1DD); line-height: 1.5; margin: 0;">
+                  <strong>Loan Application — Credit Eligibility Assessment.</strong><br>
+                  SahayCredit will access your credit report from CIBIL/Experian/Equifax to evaluate your creditworthiness as part of your loan application. This is a <strong>soft inquiry</strong> and will <strong>not</strong> impact your credit score.
+                </p>
+              </div>
+
+              <!-- Explicit Consent Checkbox -->
+              <div id="bureau-consent-block" style="background: rgba(2, 195, 154, 0.04); border: 1px solid rgba(2, 195, 154, 0.12); border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+                <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer;">
+                  <input type="checkbox" id="bureau-consent-checkbox" style="margin-top: 3px; accent-color: var(--secondary, #02C39A); width: 18px; height: 18px; flex-shrink: 0;">
+                  <span id="bureau-consent-text" style="font-size: 0.68rem; color: var(--text-sub, #E0E1DD); line-height: 1.55;">
+                    I, the undersigned, hereby authorize <strong>SahayCredit</strong> to access my credit report and credit score from <strong>CIBIL, Experian, and/or Equifax</strong> for the purpose of evaluating my credit eligibility for a loan application. I understand this is a soft inquiry and will not affect my credit score. I consent to my PAN and identity details being transmitted securely (SSL/TLS encrypted) to the credit bureau.
+                  </span>
+                </label>
+              </div>
+
+              <!-- Encryption & Security Notice -->
+              <div style="display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; padding: 10px; margin-bottom: 6px;">
+                <span style="font-size: 1rem;">🔐</span>
+                <p style="font-size: 0.58rem; color: var(--text-muted); line-height: 1.45; margin: 0;">
+                  <strong>End-to-End Encrypted:</strong> Your PAN and credit data are transmitted over SSL/TLS. No raw data is stored on our servers. All consent actions are timestamped and logged in an immutable audit trail.
+                </p>
+              </div>
+
+              <!-- Consent Timestamp Display (hidden until checked) -->
+              <div id="bureau-consent-timestamp-block" style="display: none; background: rgba(2, 195, 154, 0.06); border: 1px solid rgba(2, 195, 154, 0.12); border-radius: 6px; padding: 8px 12px; margin-top: 10px; margin-bottom: 6px;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.6rem;">
+                  <span style="color: var(--text-muted);">Consent Granted</span>
+                  <span id="bureau-consent-timestamp" style="color: var(--secondary); font-weight: 600; font-family: monospace; font-size: 0.58rem;">—</span>
+                </div>
+              </div>
+
+              <!-- OTP Verification Section (hidden until consent given) -->
+              <div id="bureau-otp-section" style="display: none; margin-top: 16px;">
+                <div style="background: rgba(244, 162, 97, 0.06); border: 1px solid rgba(244, 162, 97, 0.15); border-radius: 8px; padding: 14px;">
+                  <p style="font-size: 0.7rem; font-weight: 700; color: var(--warning, #F4A261); margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 0.5px;">🔑 OTP Verification Required</p>
+                  <p style="font-size: 0.62rem; color: var(--text-muted); line-height: 1.45; margin: 0 0 12px 0;">
+                    A one-time password will be sent to your registered mobile/email to authenticate this credit bureau inquiry.
+                  </p>
+
+                  <!-- OTP Input Row -->
+                  <div id="bureau-otp-send-row">
+                    <div class="rbi-input-group" style="margin-bottom: 10px;">
+                      <label class="rbi-input-label" style="display: flex; align-items: center; gap: 6px; font-size: 0.72rem;">
+                        <span style="font-size: 0.85rem;">📱</span> Mobile / Email
+                      </label>
+                      <input type="text" id="bureau-otp-destination" class="rbi-input-field-text" placeholder="e.g. 9876543210 or email@example.com" autocomplete="off" style="font-size: 0.75rem;">
+                    </div>
+                    <button type="button" id="bureau-otp-send-btn" class="btn btn-secondary" style="width: 100%; padding: 8px; font-size: 0.75rem; border-radius: 6px;">
+                      📩 Send OTP
+                    </button>
+                  </div>
+
+                  <!-- OTP Code Input (hidden until OTP sent) -->
+                  <div id="bureau-otp-verify-row" style="display: none; margin-top: 12px;">
+                    <div style="background: rgba(2, 195, 154, 0.06); border-radius: 6px; padding: 8px 12px; margin-bottom: 10px;">
+                      <p style="font-size: 0.6rem; color: var(--secondary); margin: 0; font-weight: 600;">✅ OTP sent successfully!</p>
+                    </div>
+                    <div class="rbi-input-group" style="margin-bottom: 10px;">
+                      <label class="rbi-input-label" style="font-size: 0.72rem;">Enter OTP Code</label>
+                      <input type="text" id="bureau-otp-code" class="rbi-input-field-text" placeholder="Enter 6-digit OTP" maxlength="6" autocomplete="off" style="font-size: 0.85rem; letter-spacing: 6px; text-align: center; font-family: monospace; font-weight: 700;">
+                    </div>
+                    <button type="button" id="bureau-otp-verify-btn" class="btn btn-primary btn-glow" style="width: 100%; padding: 8px; font-size: 0.75rem; border-radius: 6px;">
+                      ✅ Verify OTP
+                    </button>
+                  </div>
+
+                  <!-- OTP Verified Success (hidden until verified) -->
+                  <div id="bureau-otp-verified-block" style="display: none; margin-top: 10px;">
+                    <div style="background: rgba(2, 195, 154, 0.08); border: 1px solid rgba(2, 195, 154, 0.2); border-radius: 6px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center;">
+                      <div>
+                        <p style="font-size: 0.68rem; color: var(--secondary); font-weight: 700; margin: 0;">OTP Verified ✓</p>
+                        <p style="font-size: 0.55rem; color: var(--text-muted); margin: 2px 0 0 0;">Token: <span id="bureau-otp-token" style="font-family: monospace; color: var(--text-main);">—</span></p>
+                      </div>
+                      <span style="font-size: 1.5rem;">🔓</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="action-footer" style="margin-top: 25px;">
+              <button id="credit-check-btn" class="btn btn-primary btn-glow" disabled>
+                <span id="credit-check-btn-text">Check My Credit Score</span>
+                <span class="btn-icon">→</span>
+              </button>
+              <p style="font-size: 0.55rem; color: var(--text-muted); text-align: center; margin-top: 8px;">
+                ✅ You must provide consent and verify OTP before proceeding.
+              </p>
+            </div>
+          </div>
+
+          <!-- Step 2: Checking -->
+          <div id="credit-check-step-loading" class="rbi-step-container" style="display: none;">
+            <div class="rbi-status-header">
+              <div class="rbi-spinner">
+                <div class="spinner-circle"></div>
+              </div>
+              <h3 class="rbi-status-title">Querying Credit Bureaus...</h3>
+            </div>
+            <div class="rbi-logs-container card-glow">
+              <div class="rbi-log-line" id="cc-log-1">• Connecting to bureau registry...</div>
+              <div class="rbi-log-line" id="cc-log-2">• Verifying PAN with NSDL...</div>
+              <div class="rbi-log-line" id="cc-log-3">• Fetching credit history...</div>
+              <div class="rbi-log-line" id="cc-log-4">• Compiling report...</div>
+            </div>
+          </div>
+
+          <!-- Step 3: Score Found -->
+          <div id="credit-check-step-found" class="rbi-step-container" style="display: none;">
+            <div style="text-align: center; padding: 20px 0;">
+              <div style="font-size: 3rem; margin-bottom: 12px;">📊</div>
+              <h3 style="font-size: 1rem; font-weight: 700; color: var(--secondary); margin-bottom: 6px;">Existing Credit Score Found</h3>
+              <p style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.45;">We found an existing credit record associated with your PAN.</p>
+            </div>
+            <div style="background: rgba(2, 195, 154, 0.06); border: 1px solid rgba(2, 195, 154, 0.15); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px;">
+              <div style="text-align: center; margin-bottom: 8px;">
+                <span id="credit-check-score-value" style="font-size: 2.8rem; font-weight: 800; color: var(--secondary); line-height: 1;">—</span>
+                <p style="font-size: 0.65rem; color: var(--text-muted); margin-top: 4px;">out of 900</p>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.68rem;">
+                <span style="color: var(--text-muted);">Rating</span>
+                <span id="credit-check-score-rating" style="font-weight: 700;">—</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.68rem;">
+                <span style="color: var(--text-muted);">Bureau Source</span>
+                <span id="credit-check-source" style="color: var(--text-main); font-weight: 600;">—</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.68rem;">
+                <span style="color: var(--text-muted);">Status</span>
+                <span style="color: var(--secondary); font-weight: 700;">Record Found ✓</span>
+              </div>
+            </div>
+            <p style="font-size: 0.6rem; color: var(--text-muted); text-align: center; margin-top: 12px; line-height: 1.4;">
+              This existing score will be used alongside our AI-powered alternate scoring to give you a comprehensive credit profile.
+            </p>
+            <div class="action-footer" style="margin-top: 20px;">
+              <button id="credit-check-proceed-btn" class="btn btn-primary btn-glow">
+                <span>Continue to Assessment</span>
+                <span class="btn-icon">→</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Step 4: No Score Found -->
+          <div id="credit-check-step-not-found" class="rbi-step-container" style="display: none;">
+            <div style="text-align: center; padding: 20px 0;">
+              <div style="font-size: 3rem; margin-bottom: 12px;">🆕</div>
+              <h3 style="font-size: 1rem; font-weight: 700; color: var(--warning); margin-bottom: 6px;">No Existing Credit Record</h3>
+              <p style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.45;">No credit history was found for this PAN. This is perfectly fine — our AI-powered alternate scoring will generate a credit profile for you based on behavioral analysis.</p>
+            </div>
+            <div style="background: rgba(244, 162, 97, 0.06); border: 1px solid rgba(244, 162, 97, 0.15); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 6px;">
+              <div style="display: flex; justify-content: space-between; font-size: 0.68rem;">
+                <span style="color: var(--text-muted);">Traditional Score</span>
+                <span style="color: var(--warning); font-weight: 700;">Not Available</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.68rem;">
+                <span style="color: var(--text-muted);">Next Step</span>
+                <span style="color: var(--secondary); font-weight: 600;">Alternate Scoring →</span>
+              </div>
+            </div>
+            <div class="action-footer" style="margin-top: 20px;">
+              <button id="credit-check-proceed-nf-btn" class="btn btn-primary btn-glow">
+                <span>Continue to Assessment</span>
+                <span class="btn-icon">→</span>
               </button>
             </div>
           </div>

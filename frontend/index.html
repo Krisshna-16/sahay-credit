@@ -3,138 +3,196 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SahayCredit - Alternate Credit Scoring</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <title>SahayCredit - Better Credit Decisions</title>
+    <!-- Using a premium geometric sans-serif font -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* Landing Page Specific Overrides & Additions */
-        body {
-            font-family: 'Outfit', sans-serif;
-            background-color: var(--bg-deep, #0D1B2A);
-            color: var(--text-main, #FFFFFF);
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            align-items: center;
-            overflow-y: auto;
-            overflow-x: hidden;
-            min-height: 100vh;
+        :root {
+            --bg-color: #0b0f19;
+            --surface: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --mint-green: #2ee68b;
+            --mint-glow: rgba(46, 230, 139, 0.4);
+            --blue-glow: rgba(56, 189, 248, 0.15);
         }
 
-        /* Ambient Glows for Landing */
-        .landing-glow-1 {
-            position: absolute;
-            top: -10%;
-            left: -10%;
-            width: 50vw;
-            height: 50vw;
-            background: radial-gradient(circle, var(--primary-glow, rgba(2, 128, 144, 0.4)) 0%, transparent 60%);
-            z-index: -1;
-            border-radius: 50%;
-        }
-        
-        .landing-glow-2 {
-            position: absolute;
-            bottom: -20%;
-            right: -10%;
-            width: 60vw;
-            height: 60vw;
-            background: radial-gradient(circle, var(--secondary-glow, rgba(2, 195, 154, 0.3)) 0%, transparent 60%);
-            z-index: -1;
-            border-radius: 50%;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        /* Header Navigation */
-        header {
+        body, html {
             width: 100%;
-            max-width: 1200px;
+            height: 100vh;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Minimal Tech/Grid Background */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: -2;
+            mask-image: radial-gradient(circle at center, black, transparent 80%);
+            -webkit-mask-image: radial-gradient(circle at center, black, transparent 80%);
+        }
+
+        /* Glowing ambient orbs */
+        .ambient-glow-1 {
+            position: absolute;
+            top: -10%; left: -10%;
+            width: 50vw; height: 50vw;
+            background: radial-gradient(circle, var(--blue-glow) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: -1;
+            filter: blur(60px);
+        }
+
+        .ambient-glow-2 {
+            position: absolute;
+            bottom: -20%; right: -10%;
+            width: 60vw; height: 60vw;
+            background: radial-gradient(circle, rgba(46, 230, 139, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: -1;
+            filter: blur(60px);
+        }
+
+        /* Header / Glassmorphism */
+        header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 2rem 2rem;
+            padding: 1.5rem 5%;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            position: relative;
             z-index: 10;
         }
 
         .logo {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: var(--text-main, #fff);
-            text-decoration: none;
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
         }
 
-        .logo span {
-            color: var(--secondary, #02C39A);
+        .logo-icon {
+            color: var(--mint-green);
+            font-size: 1.8rem;
         }
 
         nav {
             display: flex;
-            gap: 2rem;
+            align-items: center;
+            gap: 3rem;
+            background: var(--surface);
+            padding: 0.5rem 2rem;
+            border-radius: 50px;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
         }
 
         nav a {
-            color: var(--text-sub, #E0E1DD);
+            color: var(--text-sub);
             text-decoration: none;
-            font-weight: 400;
-            transition: var(--transition-fast, all 0.2s ease);
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: color 0.3s ease;
         }
 
-        nav a:hover {
-            color: var(--secondary, #02C39A);
+        nav a.active, nav a:hover {
+            color: var(--text-main);
         }
 
-        .cta-btn {
+        .nav-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .btn-outline {
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.02);
             padding: 0.6rem 1.5rem;
             border-radius: 50px;
-            background: var(--bg-surface, #1B263B);
-            border: 1px solid var(--border-glass, rgba(255,255,255,0.08));
-            color: var(--text-main, #fff);
-            text-decoration: none;
+            color: var(--text-main);
             font-weight: 600;
-            transition: var(--transition-smooth, all 0.35s ease);
+            text-decoration: none;
+            transition: all 0.3s ease;
         }
 
-        .cta-btn:hover {
-            background: var(--primary, #028090);
-            border-color: var(--primary, #028090);
+        .btn-outline:hover {
+            border-color: var(--mint-green);
+            background: rgba(46, 230, 139, 0.05);
+            color: var(--mint-green);
         }
 
-        /* Hero Section */
-        .hero {
+        main {
             display: flex;
             flex-direction: row;
             align-items: center;
             justify-content: space-between;
+            min-height: calc(100vh - 100px);
+            padding: 2rem 5%;
+            max-width: 1400px;
+            margin: 0 auto;
             width: 100%;
-            max-width: 1200px;
-            padding: 4rem 2rem;
-            flex-grow: 1;
-            z-index: 10;
-            gap: 4rem;
+            position: relative;
+            z-index: 2;
         }
 
-        .hero-content {
-            flex: 1;
-            max-width: 600px;
+        .content-left {
+            flex: 1.1;
+            padding-right: 4rem;
         }
 
-        .hero-content h1 {
+        .badge {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            background: rgba(46, 230, 139, 0.1);
+            color: var(--mint-green);
+            border: 1px solid rgba(46, 230, 139, 0.2);
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 1.5rem;
+        }
+
+        .content-left h1 {
             font-size: 4rem;
             line-height: 1.1;
+            font-weight: 800;
             margin-bottom: 1.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #fff 0%, var(--text-sub, #E0E1DD) 100%);
+            letter-spacing: -1.5px;
+            background: linear-gradient(135deg, #ffffff 0%, #94a3b8 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        .hero-content p {
-            font-size: 1.2rem;
-            color: var(--text-muted, #8D99AE);
+        .content-left p {
+            font-size: 1.25rem;
+            line-height: 1.7;
+            color: var(--text-sub);
             margin-bottom: 3rem;
-            line-height: 1.6;
+            font-weight: 400;
+            max-width: 90%;
         }
 
         .action-buttons {
@@ -142,117 +200,174 @@
             gap: 1.5rem;
         }
 
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem 2rem;
-            border-radius: 50px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            text-decoration: none;
-            transition: var(--transition-smooth, all 0.35s ease);
-            cursor: pointer;
-        }
-
         .btn-primary {
-            background-color: var(--primary, #028090);
-            color: #fff;
-            box-shadow: 0 10px 20px rgba(2, 128, 144, 0.3);
-            border: 2px solid var(--primary, #028090);
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--mint-green);
+            color: #0b0f19;
+            font-weight: 700;
+            font-size: 1.1rem;
+            padding: 1.1rem 3rem;
+            border-radius: 50px;
+            text-decoration: none;
+            box-shadow: 0 10px 30px var(--mint-glow);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid var(--mint-green);
+            flex: 1;
+            max-width: 220px;
         }
 
         .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 25px rgba(2, 128, 144, 0.5);
-            background-color: #029BAE; /* slightly lighter */
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 15px 40px rgba(46, 230, 139, 0.6);
         }
 
         .btn-secondary {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
             background-color: transparent;
-            color: var(--secondary, #02C39A);
-            border: 2px solid var(--secondary, #02C39A);
+            color: var(--text-main);
+            font-weight: 600;
+            font-size: 1.1rem;
+            padding: 1.1rem 3rem;
+            border-radius: 50px;
+            text-decoration: none;
+            border: 2px solid var(--border);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            flex: 1;
+            max-width: 220px;
+            backdrop-filter: blur(5px);
         }
 
         .btn-secondary:hover {
-            background-color: rgba(2, 195, 154, 0.1);
+            border-color: rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.05);
             transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(2, 195, 154, 0.2);
         }
 
-        .hero-image {
-            flex: 1;
+        /* Right Side Image Styling */
+        .content-right {
+            flex: 0.9;
             display: flex;
             justify-content: center;
             align-items: center;
             position: relative;
         }
 
-        .hero-image img {
+        /* Image Backdrop Glow */
+        .image-glow {
+            position: absolute;
+            width: 70%;
+            height: 70%;
+            background: radial-gradient(circle, var(--mint-glow) 0%, transparent 60%);
+            filter: blur(40px);
+            z-index: 1;
+            animation: pulse 4s ease-in-out infinite alternate;
+        }
+
+        .content-right img {
             width: 100%;
-            max-width: 500px;
+            max-width: 600px;
             height: auto;
-            border-radius: 20px;
-            box-shadow: var(--shadow-main, 0 20px 40px rgba(0,0,0,0.5));
-            animation: float 6s ease-in-out infinite;
+            position: relative;
+            z-index: 2;
+            filter: drop-shadow(0 20px 30px rgba(0,0,0,0.5));
         }
 
         @keyframes float {
             0% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
+            50% { transform: translateY(-15px); }
             100% { transform: translateY(0px); }
         }
 
-        /* Responsive Design */
-        @media (max-width: 900px) {
-            .hero {
+        @keyframes pulse {
+            0% { opacity: 0.5; transform: scale(1); }
+            100% { opacity: 0.8; transform: scale(1.1); }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            header {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+            nav {
+                width: 100%;
+                justify-content: center;
+                gap: 1.5rem;
+            }
+            .nav-right {
+                display: none;
+            }
+            main {
                 flex-direction: column;
                 text-align: center;
-                padding: 2rem 1rem;
-                gap: 2rem;
+                padding-top: 3rem;
             }
-            .hero-content h1 {
+            .content-left {
+                padding-right: 0;
+                margin-bottom: 4rem;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            .content-left h1 {
                 font-size: 3rem;
+            }
+            .content-left p {
+                max-width: 100%;
             }
             .action-buttons {
                 justify-content: center;
-                flex-direction: column;
+                width: 100%;
+                flex-wrap: wrap;
             }
-            nav {
-                display: none;
+            .content-right {
+                width: 100%;
+                margin-bottom: 3rem;
             }
         }
     </style>
 </head>
 <body>
 
-    <div class="landing-glow-1"></div>
-    <div class="landing-glow-2"></div>
+    <div class="ambient-glow-1"></div>
+    <div class="ambient-glow-2"></div>
 
     <header>
-        <a href="#" class="logo">⚡ Sahay<span>Credit</span></a>
+        <div class="logo">
+            <span class="logo-icon">⚡</span>
+            Sahay Credit
+        </div>
         <nav>
-            <a href="#">Home</a>
-            <a href="#">About Us</a>
+            <a href="#" class="active">Home</a>
+            <a href="map.html">Map</a>
             <a href="#">Features</a>
-            <a href="#">Contact</a>
+            <a href="demo.html">Demo</a>
         </nav>
-        <a href="borrower.html" class="cta-btn">Get Started</a>
+        <div class="nav-right">
+            <a href="borrower.html" class="btn-outline">Get Started</a>
+        </div>
     </header>
 
-    <main class="hero">
-        <div class="hero-content">
-            <h1>Unlock Alternate Credit with SahayCredit</h1>
-            <p>Gain complete insight into your financial score using our easy-to-use tools. Whether you're building credit from scratch or lending to the underserved, we provide clarity.</p>
+    <main>
+        <div class="content-left">
+            <div class="badge">AI-Powered Scoring</div>
+            <h1>Financial Inclusion Starts With Better Credit</h1>
+            <p>Helping first-time borrowers, gig workers, and MSMEs access fair credit through behavioral analysis.</p>
             
             <div class="action-buttons">
-                <a href="borrower.html" class="btn btn-primary">I am a Borrower</a>
-                <a href="lender.html" class="btn btn-secondary">I am a Lender</a>
+                <a href="lender.html" class="btn-primary">Lender</a>
+                <a href="borrower.html" class="btn-secondary">Borrower</a>
             </div>
         </div>
-        
-        <div class="hero-image">
-            <img src="hero_image.jpg" alt="SahayCredit Alternate Credit Score App in Hand">
+
+        <div class="content-right">
+            <div class="image-glow"></div>
+            <!-- Using the transparent image uploaded by the user -->
+            <img src="hands.png" alt="Hands holding glowing gold coin">
         </div>
     </main>
 

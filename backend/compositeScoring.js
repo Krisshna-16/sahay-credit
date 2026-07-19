@@ -10,16 +10,17 @@
  *   - Merchant/business ratings (if consented AND MSME)
  *   - Behaviour Risk Score from AA transaction data (if consented)
  *
- * The core financial model is ALWAYS the dominant anchor (≥50% weight).
- * Alternative data can only IMPROVE the overall picture — it adds resolution,
- * not risk. If a borrower doesn't consent to sharing alt data, they still
- * get a score from the core model alone. No penalty for opting out.
+ * The core financial model is ALWAYS the dominant anchor (≥60% weight,
+ * in all consent scenarios). Alternative data can only IMPROVE the overall
+ * picture — it adds resolution, not risk. If a borrower doesn't consent
+ * to sharing alt data, they still get a score from the core model alone.
+ * No penalty for opting out.
  *
  * WEIGHT SCHEDULE:
  *   Core only:            100% core
  *   Core + 1 alt source:  75% core / 25% alt
  *   Core + 2 alt sources: 60% core / 20% alt / 20% alt
- *   Core + 3 alt sources: 50% core / 17% alt / 17% alt / 16% alt
+ *   Core + 3 alt sources: 60% core / 13% alt / 13% alt / 14% alt
  *
  * CONFIDENCE SCORE:
  *   1 source  → 55% confidence (Moderate)
@@ -90,10 +91,10 @@ function computeCompositeScore(coreScore, ecommerceResult, merchantResult, behav
     weights[altSources[0]] = 0.20;
     weights[altSources[1]] = 0.20;
   } else if (altCount === 3) {
-    weights = { core: 0.50 };
-    weights[altSources[0]] = 0.17;
-    weights[altSources[1]] = 0.17;
-    weights[altSources[2]] = 0.16;
+    weights = { core: 0.60 };
+    weights[altSources[0]] = 0.13;
+    weights[altSources[1]] = 0.13;
+    weights[altSources[2]] = 0.14;
   }
 
   // Compute weighted composite

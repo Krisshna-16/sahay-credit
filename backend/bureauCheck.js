@@ -21,7 +21,7 @@
 // In production, replace with a real CIBIL/Experian API call.
 const SYNTHETIC_BUREAU_REGISTRY = new Map([
   // Borrowers WITH existing credit history (should be routed away)
-  ['ABCDE1234F', { hasHistory: true, score: 720, loanCount: 3, name: 'Existing Credit User A' }],
+  ['ABCDE1234F', { hasHistory: true, score: 742, loanCount: 3, name: 'Existing Credit User A' }],
   ['FGHIJ5678K', { hasHistory: true, score: 680, loanCount: 1, name: 'Existing Credit User B' }],
   ['KLMNO9012P', { hasHistory: true, score: 755, loanCount: 5, name: 'Existing Credit User C' }],
   ['PQRST3456U', { hasHistory: true, score: 610, loanCount: 2, name: 'Existing Credit User D' }],
@@ -33,6 +33,7 @@ const SYNTHETIC_BUREAU_REGISTRY = new Map([
   ['EEEEE5555E', { hasHistory: true, score: 810, loanCount: 6, name: 'Existing Credit User J' }],
 
   // Borrowers WITHOUT credit history (thin-file — should proceed)
+  ['PQRSX5678L', { hasHistory: false, score: null, loanCount: 0, name: 'No History User' }],
   ['THINF0001A', { hasHistory: false, score: null, loanCount: 0, name: 'Thin-File User A' }],
   ['THINF0002B', { hasHistory: false, score: null, loanCount: 0, name: 'Thin-File User B' }],
   ['THINF0003C', { hasHistory: false, score: null, loanCount: 0, name: 'Thin-File User C' }],
@@ -95,7 +96,10 @@ function sandboxBureauCheck(identity) {
         panProvided: pan ? pan.slice(0, 2) + '***' + pan.slice(-1) : 'none'
       },
       provider: 'sandbox',
-      mode: 'sandbox'
+      mode: 'sandbox',
+      status: 'NO_CREDIT_HISTORY',
+      creditScore: null,
+      source: 'Prototype Bureau'
     };
   }
 
@@ -115,7 +119,10 @@ function sandboxBureauCheck(identity) {
         note: 'Simulated bureau registry (sandbox mode)'
       },
       provider: 'sandbox',
-      mode: 'sandbox'
+      mode: 'sandbox',
+      status: 'HAS_CREDIT_HISTORY',
+      creditScore: record.score,
+      source: 'Prototype Bureau'
     };
   }
 
@@ -132,7 +139,10 @@ function sandboxBureauCheck(identity) {
       note: 'Simulated bureau registry (sandbox mode)'
     },
     provider: 'sandbox',
-    mode: 'sandbox'
+    mode: 'sandbox',
+    status: 'NO_CREDIT_HISTORY',
+    creditScore: null,
+    source: 'Prototype Bureau'
   };
 }
 

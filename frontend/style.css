@@ -5179,3 +5179,36 @@ input:checked + .vault-slider:before {
   }
 }
 
+/* Camera UI Styles */
+.camera-container {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px dashed var(--border-glass, rgba(255,255,255,0.1));
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  text-align: center;
+  margin-top: 8px;
+  position: relative;
+  overflow: hidden;
+  min-height: 180px;
+}
+
+#ekyc-video, #ekyc-photo-preview {
+  width: 100%;
+  max-width: 250px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 2px solid var(--primary, #028090);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.camera-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
