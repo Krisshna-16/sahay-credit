@@ -2571,7 +2571,7 @@ function renderCalculatedResults() {
     }
   }
 
-  // ── Render ML Credit Score Card (from Python XGBoost service) ───────────
+  // ── Render ML Fraud Score Card (from Python LightGBM IEEE-CIS service) ────
   const mlCard = document.getElementById('ml-score-card');
   if (mlCard) {
     if (data.mlCreditScore) {
@@ -2596,15 +2596,24 @@ function renderCalculatedResults() {
 
       const isHiML = lang === 'hi';
       const descMap = {
-        Low:    isHiML ? 'मशीन लर्निंग मॉडल आपको कम जोखिम वाला उधारकर्ता मानता है। ऋण स्वीकृति की उच्च संभावना।'
-                       : 'The ML model classifies you as a low-risk borrower. High likelihood of loan approval.',
-        Medium: isHiML ? 'मध्यम जोखिम — कुछ अतिरिक्त सत्यापन की आवश्यकता हो सकती है।'
-                       : 'Medium risk — some additional verification may be required.',
-        High:   isHiML ? 'उच्च जोखिम — लेंडर अतिरिक्त दस्तावेज़ीकरण का अनुरोध कर सकते हैं।'
-                       : 'Higher risk — lenders may request additional documentation.'
+        Low:    isHiML ? 'IEEE-CIS डेटासेट पर प्रशिक्षित LightGBM फ्रॉड मॉडल इस प्रोफाइल को कम धोखाधड़ी जोखिम के रूप में वर्गीकृत करता है।'
+                       : 'The LightGBM fraud model trained on the IEEE-CIS dataset classifies this transaction profile as low fraud risk.',
+        Medium: isHiML ? 'मध्यम धोखाधड़ी जोखिम — अतिरिक्त सुरक्षा सत्यापन की आवश्यकता हो सकती है।'
+                       : 'Medium fraud risk — additional security verification may be required.',
+        High:   isHiML ? 'उच्च धोखाधड़ी जोखिम — सुरक्षा समीक्षा के लिए चिह्नित।'
+                       : 'High fraud risk — flagged for security review.'
       };
       document.getElementById('ml-card-desc').textContent = descMap[riskLevel] || '';
-      if (isHiML) document.getElementById('ml-card-title').textContent = 'एमएल क्रेडिट स्कोर';
+      
+      const cardTitle = document.getElementById('ml-card-title');
+      const riskTitle = document.getElementById('lbl-ml-risk-title');
+      const probTitle = document.getElementById('lbl-ml-prob-title');
+      const poweredBadge = document.getElementById('ml-powered-badge');
+      
+      if (cardTitle) cardTitle.textContent = isHiML ? 'एमएल फ्रॉड स्कोर' : 'ML Fraud Score';
+      if (riskTitle) riskTitle.textContent = isHiML ? 'फ्रॉड जोखिम स्तर:' : 'Fraud Risk Level:';
+      if (probTitle) probTitle.textContent = isHiML ? 'फ्रॉड की संभावना:' : 'Fraud Probability:';
+      if (poweredBadge) poweredBadge.textContent = isHiML ? 'LightGBM · IEEE-CIS मॉडल' : 'LightGBM · IEEE-CIS Model';
     } else {
       mlCard.style.display = 'none';
     }
