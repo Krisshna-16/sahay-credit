@@ -635,11 +635,6 @@
         </div>
 
         <div class="map-controls-row">
-          <div class="coverage-toggle-wrap" id="coverage-toggle">
-            <div class="coverage-toggle-switch"></div>
-            <span class="coverage-toggle-label">Show SahayCredit Coverage</span>
-          </div>
-
           <div class="map-legend">
             <div class="legend-item"><div class="legend-dot ld-red"></div>&gt;40% excluded</div>
             <div class="legend-item"><div class="legend-dot ld-orange"></div>25–40%</div>
@@ -1200,19 +1195,21 @@ function showStateDetail(name) {
 const coverageToggle = document.getElementById('coverage-toggle');
 let coverageVisible = false;
 
-coverageToggle.addEventListener('click', () => {
-  coverageVisible = !coverageVisible;
-  coverageToggle.classList.toggle('active', coverageVisible);
+if (coverageToggle) {
+  coverageToggle.addEventListener('click', () => {
+    coverageVisible = !coverageVisible;
+    coverageToggle.classList.toggle('active', coverageVisible);
 
-  document.querySelectorAll('.coverage-dot').forEach((dot, i) => {
-    if (coverageVisible) {
-      // Staggered reveal
-      setTimeout(() => dot.classList.add('visible'), i * 80);
-    } else {
-      dot.classList.remove('visible');
-    }
+    document.querySelectorAll('.coverage-dot').forEach((dot, i) => {
+      if (coverageVisible) {
+        // Staggered reveal
+        setTimeout(() => dot.classList.add('visible'), i * 80);
+      } else {
+        dot.classList.remove('visible');
+      }
+    });
   });
-});
+}
 
 /* ── 7. INITIAL PAINT ────────────────────────────────────────── */
 paintMap();
