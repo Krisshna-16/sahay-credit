@@ -1196,19 +1196,6 @@
             
             <div id="confidence-bounds-label" class="confidence-bounds-text">Confidence Interval: 705 - 735</div>
 
-            <!-- 800+ Score Instant Loan Approval Banner (Always Visible Below Credit Score) -->
-            <div id="instant-loan-grant-banner" style="display: block; margin-top: 14px; padding: 14px 16px; background: linear-gradient(135deg, rgba(2, 195, 154, 0.14) 0%, rgba(108, 99, 255, 0.12) 100%); border: 1.5px solid rgba(2, 195, 154, 0.4); border-radius: 12px; text-align: center; box-shadow: 0 4px 20px rgba(2, 195, 154, 0.15); transition: all 0.3s ease;">
-              <div style="font-size: 0.72rem; font-weight: 700; color: #02C39A; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px;">
-                For those with 800+ score
-              </div>
-              <div style="font-size: 1.05rem; font-weight: 800; color: #ffffff; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                <span>✅</span> Loan Approved Instantly
-              </div>
-              <div id="instant-loan-grant-details" style="font-size: 0.78rem; color: var(--text-sub); background: rgba(0, 0, 0, 0.2); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05); line-height: 1.4;">
-                Granted Amount: <strong style="color:#02C39A;">₹1,73,421</strong> | EMI: <strong>₹8,550/mo</strong> (24 mos) | Rate: <strong>10.0%–14.0% p.a.</strong>
-              </div>
-            </div>
-
             <!-- Data Sources Indicator -->
             <div id="data-sources-indicator" style="display: none; text-align: center; margin-top: 6px; font-size: 0.7rem; color: var(--secondary); font-weight: 600; letter-spacing: 0.02em; padding: 4px 12px; background: rgba(108,99,255,0.06); border-radius: 16px; display: inline-block;">
               <span id="data-sources-indicator-text">Score based on 1 of 3 available data sources</span>
@@ -1434,9 +1421,21 @@
           </div>
 
           <div class="action-footer">
-            <button id="apply-btn" class="btn btn-primary btn-glow">
-              <span id="apply-btn-text">Apply for Loan</span>
-            </button>
+            <!-- ⚡ Instant Loan Feature Card -->
+            <div id="instant-loan-grant-banner" style="display: block; margin-bottom: 14px; padding: 16px; background: linear-gradient(135deg, rgba(2, 195, 154, 0.16) 0%, rgba(108, 99, 255, 0.14) 100%); border: 1.5px solid rgba(2, 195, 154, 0.45); border-radius: 14px; text-align: center; box-shadow: 0 6px 24px rgba(2, 195, 154, 0.18);">
+              <div style="font-size: 0.72rem; font-weight: 700; color: #02C39A; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 4px;">
+                ⚡ INSTANT LOAN
+              </div>
+              <div style="font-size: 1.1rem; font-weight: 800; color: #ffffff; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <span>✅</span> Loan Approved Instantly
+              </div>
+              <div id="instant-loan-grant-details" style="font-size: 0.78rem; color: var(--text-sub); background: rgba(0, 0, 0, 0.25); padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08); margin-bottom: 12px; line-height: 1.4;">
+                Granted Amount: <strong style="color:#02C39A;">₹1,73,421</strong> | EMI: <strong>₹8,550/mo</strong> (24 mos) | Rate: <strong>10.0%–14.0% p.a.</strong>
+              </div>
+              <button id="apply-btn" class="btn btn-primary btn-glow" style="width: 100%; font-size: 0.95rem; font-weight: 700; padding: 12px; background: linear-gradient(135deg, #02C39A 0%, #6C63FF 100%); border: none;">
+                ⚡ <span id="apply-btn-text">Get Instant Loan Disbursal</span>
+              </button>
+            </div>
             <button id="emi-planner-btn" class="btn btn-secondary btn-glow" style="margin-top: 10px; width: 100%;">
               📄 <span id="emi-planner-btn-text">EMI Calculator & Affordability Planner</span>
             </button>

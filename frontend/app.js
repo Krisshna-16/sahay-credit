@@ -1524,7 +1524,7 @@ function translateUI() {
   dom.dimFdLabel.textContent = t.dimFdLabel;
   dom.dimRaLabel.textContent = t.dimRaLabel;
   dom.dimRiLabel.textContent = t.dimRiLabel;
-  if (dom.applyBtnText) dom.applyBtnText.textContent = t.applyBtnText;
+  if (dom.applyBtnText) dom.applyBtnText.textContent = lang === 'en' ? 'Get Instant Loan Disbursal' : 'तत्काल ऋण संवितरण प्राप्त करें';
   dom.restartBtnText.textContent = t.restartBtnText;
   dom.rateLabel.textContent = t.rateLabel;
   dom.shapHeadline.textContent = t.shapHeadline;
