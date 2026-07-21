@@ -2525,37 +2525,32 @@ function renderCalculatedResults() {
     }, 100);
   }
 
-  // ── Render 800+ Score Instant Loan Approval Banner ───────────────────────────
+  // ── Render Instant Loan Approval Banner (Always Shown Below Credit Score) ──
   const instantBanner = document.getElementById('instant-loan-grant-banner');
   if (instantBanner) {
-    const effectiveScore = Number(data.score) || Number(data.mlCreditScore) || 0;
-    if (effectiveScore >= 800) {
-      instantBanner.style.display = 'block';
-      const detailsEl = document.getElementById('instant-loan-grant-details');
-      if (detailsEl) {
-        const aff = data.mlAffordability;
-        const fmt = (n) => '₹' + Math.round(n).toLocaleString('en-IN');
-        const isHi = lang === 'hi';
+    instantBanner.style.display = 'block';
+    const detailsEl = document.getElementById('instant-loan-grant-details');
+    if (detailsEl) {
+      const aff = data.mlAffordability;
+      const fmt = (n) => '₹' + Math.round(n).toLocaleString('en-IN');
+      const isHi = lang === 'hi';
 
-        if (aff && aff.safe_loan_amount > 0) {
-          const safeAmt = fmt(aff.safe_loan_amount);
-          const emi = fmt(aff.recommended_emi);
-          const tenure = aff.recommended_tenure_months || 24;
-          const rate = (aff.interest_rate_band || '10.0%–14.0% p.a.').replace('p.a.', isHi ? 'प्रति वर्ष' : 'p.a.');
+      if (aff && aff.safe_loan_amount > 0) {
+        const safeAmt = fmt(aff.safe_loan_amount);
+        const emi = fmt(aff.recommended_emi);
+        const tenure = aff.recommended_tenure_months || 24;
+        const rate = (aff.interest_rate_band || '10.0%–14.0% p.a.').replace('p.a.', isHi ? 'प्रति वर्ष' : 'p.a.');
 
-          detailsEl.innerHTML = isHi
-            ? `स्वीकृत ऋण राशि: <strong style="color:#02C39A;">${safeAmt}</strong> | EMI: <strong>${emi}/माह</strong> (${tenure} महीने) | ब्याज दर: <strong>${rate}</strong>`
-            : `Granted Amount: <strong style="color:#02C39A;">${safeAmt}</strong> | EMI: <strong>${emi}/mo</strong> (${tenure} mos) | Rate: <strong>${rate}</strong>`;
-        } else {
-          const safeAmt = fmt(data.creditLimit || 250000);
-          const estEmi = fmt((data.creditLimit || 250000) / 24 * 1.1);
-          detailsEl.innerHTML = isHi
-            ? `स्वीकृत ऋण राशि: <strong style="color:#02C39A;">${safeAmt}</strong> | अनुमानित EMI: <strong>${estEmi}/माह</strong> (24 महीने)`
-            : `Granted Amount: <strong style="color:#02C39A;">${safeAmt}</strong> | Est. EMI: <strong>${estEmi}/mo</strong> (24 mos)`;
-        }
+        detailsEl.innerHTML = isHi
+          ? `स्वीकृत ऋण राशि: <strong style="color:#02C39A;">${safeAmt}</strong> | EMI: <strong>${emi}/माह</strong> (${tenure} महीने) | ब्याज दर: <strong>${rate}</strong>`
+          : `Granted Amount: <strong style="color:#02C39A;">${safeAmt}</strong> | EMI: <strong>${emi}/mo</strong> (${tenure} mos) | Rate: <strong>${rate}</strong>`;
+      } else {
+        const safeAmt = fmt(data.creditLimit || 250000);
+        const estEmi = fmt((data.creditLimit || 250000) / 24 * 1.1);
+        detailsEl.innerHTML = isHi
+          ? `स्वीकृत ऋण राशि: <strong style="color:#02C39A;">${safeAmt}</strong> | अनुमानित EMI: <strong>${estEmi}/माह</strong> (24 महीने)`
+          : `Granted Amount: <strong style="color:#02C39A;">${safeAmt}</strong> | Est. EMI: <strong>${estEmi}/mo</strong> (24 mos)`;
       }
-    } else {
-      instantBanner.style.display = 'none';
     }
   }
 
