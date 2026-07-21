@@ -778,18 +778,21 @@ function renderTable() {
 
       // Affordability mini-row (inline, same cell as score)
       const aff = app.mlAffordability;
-      if (aff && aff.emi_capacity > 0) {
+      if (aff && (aff.emi_capacity !== undefined || aff.safe_loan_amount !== undefined)) {
         const fmt = (n) => '₹' + Math.round(n).toLocaleString('en-IN');
         const rateBand = (aff.interest_rate_band || '').replace('–', '–');
+        const safeLoanVal = aff.safe_loan_amount > 0 ? fmt(aff.safe_loan_amount) : '₹0 (Low Income)';
+        const emiVal = aff.recommended_emi > 0 ? `${fmt(aff.recommended_emi)}/mo` : '₹0/mo';
+        
         mlScoreBadge += `
         <div style="margin-top:5px; display:flex; flex-wrap:wrap; gap:4px;">
           <span style="font-size:0.6rem; padding:1px 6px; border-radius:3px;
             background:rgba(2,195,154,0.07); border:1px solid rgba(2,195,154,0.2); color:#02C39A;">
-            🏦 Safe Loan: ${fmt(aff.safe_loan_amount)}
+            🏦 Safe Loan: ${safeLoanVal}
           </span>
           <span style="font-size:0.6rem; padding:1px 6px; border-radius:3px;
             background:rgba(100,180,255,0.07); border:1px solid rgba(100,180,255,0.2); color:#64b4ff;">
-            📅 EMI: ${fmt(aff.recommended_emi)}/mo · ${aff.recommended_tenure_months}m
+            📅 EMI: ${emiVal} · ${aff.recommended_tenure_months || 24}m
           </span>
           <span style="font-size:0.6rem; padding:1px 6px; border-radius:3px;
             background:rgba(255,200,80,0.07); border:1px solid rgba(255,200,80,0.2); color:#ffc850;">
