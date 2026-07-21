@@ -548,7 +548,8 @@ const dom = {
     comparison: document.getElementById('comparison-screen'),
     emiPlanner: document.getElementById('emi-planner-screen'),
     vault: document.getElementById('vault-screen'),
-    privacy: document.getElementById('privacy-screen')
+    privacy: document.getElementById('privacy-screen'),
+    disbursed: document.getElementById('disbursed-screen')
   },
   
   // Comparison View
@@ -883,10 +884,26 @@ function bindEvents() {
   // Quiz Screen -> Back Navigation
   dom.backBtn.addEventListener('click', handleBack);
 
-  // Result Screen -> Apply (Navigate to Comparison Screen)
+  // Result Screen -> Instant Disbursal Congratulations Screen
   if (dom.applyBtn) {
     dom.applyBtn.addEventListener('click', () => {
-      navigateTo('comparison-screen');
+      renderDisbursedScreen();
+      navigateTo('disbursed-screen');
+    });
+  }
+
+  // Disbursed Screen action listeners
+  const disbursedHomeBtn = document.getElementById('disbursed-home-btn');
+  if (disbursedHomeBtn) {
+    disbursedHomeBtn.addEventListener('click', () => {
+      navigateTo('result-screen');
+    });
+  }
+
+  const disbursedDownloadBtn = document.getElementById('disbursed-download-btn');
+  if (disbursedDownloadBtn) {
+    disbursedDownloadBtn.addEventListener('click', () => {
+      alert('📄 Sanction Letter & Loan Agreement downloaded successfully!');
     });
   }
 
@@ -2629,6 +2646,44 @@ function renderCalculatedResults() {
       const unavailEl = document.getElementById('affordability-unavailable');
       if (unavailEl) unavailEl.style.display = 'block';
     }
+  }
+}
+
+// Render Instant Disbursed Congratulations Screen
+function renderDisbursedScreen() {
+  const data = state.scoreData;
+  if (!data) return;
+
+  const isHi = state.currentLanguage === 'hi';
+  const aff = data.mlAffordability;
+  const fmt = (n) => '₹' + Math.round(n).toLocaleString('en-IN');
+
+  const amountEl = document.getElementById('disbursed-amount-val');
+  const emiEl = document.getElementById('disbursed-emi-val');
+  const rateEl = document.getElementById('disbursed-rate-val');
+  const accountEl = document.getElementById('disbursed-account-val');
+  const txRefEl = document.getElementById('disbursed-tx-ref');
+  const titleEl = document.getElementById('disbursed-title');
+  const subEl = document.getElementById('disbursed-sub');
+
+  if (titleEl) titleEl.textContent = isHi ? 'बधाई हो! 🎉 ऋण स्वीकृत' : 'Congratulations! 🎉 Loan Disbursed';
+  if (subEl) subEl.textContent = isHi ? 'आपका ऋण सफलतापूर्वक स्वीकृत किया गया है और आपके बैंक खाते में स्थानांतरित कर दिया गया है।' : 'Your loan has been successfully approved and instantly transferred to your bank account.';
+
+  const safeAmt = (aff && aff.safe_loan_amount > 0) ? aff.safe_loan_amount : (data.creditLimit || 173420);
+  const emi = (aff && aff.recommended_emi > 0) ? aff.recommended_emi : 8550;
+  const tenure = (aff && aff.recommended_tenure_months) ? aff.recommended_tenure_months : 24;
+  const rate = (aff && aff.interest_rate_band) ? aff.interest_rate_band : '12.0% p.a.';
+
+  if (amountEl) amountEl.textContent = fmt(safeAmt);
+  if (emiEl) emiEl.textContent = `${fmt(emi)}/mo (${tenure} mos)`;
+  if (rateEl) rateEl.textContent = (rate || '').replace('p.a.', isHi ? 'प्रति वर्ष' : 'p.a.');
+
+  const borrowerName = state.borrowerName || (data.profile && data.profile.name ? data.profile.name[state.currentLanguage] : 'Ramesh Kumar');
+  if (accountEl) accountEl.textContent = `${borrowerName} (HDFC Bank A/C ···· 4821)`;
+
+  if (txRefEl) {
+    const randomRef = 'TXN-SAHAY-' + Math.floor(100000 + Math.random() * 900000);
+    txRefEl.textContent = randomRef;
   }
 }
 
